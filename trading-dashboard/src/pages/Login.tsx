@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { ChartBarIcon } from '@heroicons/react/24/outline'
+// Icons removed to prevent oversized rendering on some environments
 
 export default function Login() {
   const { user, signIn, signUp } = useAuth()
@@ -44,123 +44,108 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900" />
-      <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary-600/20 blur-3xl" />
-      <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-secondary-600/20 blur-3xl" />
-      <div className="relative z-10 flex min-h-screen items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="trading-card p-8">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary-600/20 flex items-center justify-center">
-                <ChartBarIcon className="h-6 w-6 text-primary-400" />
-              </div>
-              <div>
-                <p className="text-sm text-dark-400">FinanceAI</p>
-                <h2 className="text-2xl font-bold text-white">Professional Trading Terminal</h2>
-              </div>
-            </div>
-            <p className="mt-4 text-dark-300">Sign in to access your strategies, market overview, and orders.</p>
-            <div className="mt-6 grid grid-cols-3 gap-4">
-              <div className="rounded-md bg-dark-800 p-4">
-                <p className="text-xs text-dark-400">Strategies</p>
-                <p className="mt-1 text-lg font-semibold text-white">Multi-run</p>
-              </div>
-              <div className="rounded-md bg-dark-800 p-4">
-                <p className="text-xs text-dark-400">Orders</p>
-                <p className="mt-1 text-lg font-semibold text-white">TP/SL</p>
-              </div>
-              <div className="rounded-md bg-dark-800 p-4">
-                <p className="text-xs text-dark-400">Market</p>
-                <p className="mt-1 text-lg font-semibold text-white">Realtime</p>
-              </div>
-            </div>
-          </div>
-          <div className="trading-card p-8">
-            <h3 className="text-xl font-semibold text-white mb-6">
-              {isLogin ? 'Welcome back' : 'Create your account'}
-            </h3>
-            <form className="space-y-5" onSubmit={handleSubmit}>
-              {!isLogin && (
-                <div>
-                  <label htmlFor="name" className="block text-sm text-dark-300 mb-2">Full name</label>
+    <div className="min-h-screen hero-wrap relative">
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 flex items-center gap-3 brand-glow">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-400">
+          <path d="M12 2c5.5 0 10 4.5 10 10 0 5.5-4.5 10-10 10S2 17.5 2 12 6.5 2 12 2z" stroke="currentColor" strokeWidth="1.2" />
+          <path d="M8 10c1.5-3 6.5-3 8 0M8 14c1.5 3 6.5 3 8 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M12 5v14" stroke="currentColor" strokeWidth="1.2" />
+        </svg>
+        <span className="font-display text-white text-3xl md:text-4xl tracking-wide">AI TRADING</span>
+      </div>
+
+      <div className="absolute right-12 top-24 hidden lg:block opacity-80 brand-glow">
+        <svg width="420" height="260" viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">
+          <g fill="none" stroke="#60a5fa" strokeWidth="1.2" opacity="0.85">
+            <path d="M120 60c30-40 120-40 150 0M120 180c30 40 120 40 150 0" />
+            <path d="M195 60v120" />
+          </g>
+          <g fill="#3b82f6" opacity="0.8">
+            <rect x="320" y="120" width="14" height="48" rx="3" />
+            <rect x="340" y="90" width="14" height="78" rx="3" />
+            <rect x="360" y="130" width="14" height="52" rx="3" />
+            <rect x="380" y="100" width="14" height="82" rx="3" />
+          </g>
+        </svg>
+      </div>
+
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="login-card w-full max-w-sm p-6">
+          <h1 className="text-2xl font-bold text-dark-900 text-center mb-6 font-display">Login</h1>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="email" className="block text-sm text-dark-900 mb-2 text-center">Email address</label>
+              <div className="flex justify-center">
+                <div className="input-with-icon w-[78%]">
+                  <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor"/><path d="M4 6l8 6 8-6" fill="none" stroke="currentColor"/></svg>
                   <input
-                    id="name"
-                    name="name"
+                    id="email"
+                    name="email"
                     type="text"
+                    autoComplete="email"
                     required
-                    className="w-full rounded-md px-3 py-2 border border-dark-700 bg-dark-800 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Full name"
-                    value={formData.name}
+                  className="input-soft w-full rounded-2xl"
+                    placeholder="Email address"
+                    value={formData.email}
                     onChange={handleInputChange}
                   />
                 </div>
-              )}
-              <div>
-                <label htmlFor="email" className="block text-sm text-dark-300 mb-2">Email or username</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="text"
-                  autoComplete="email"
-                  required
-                  className="w-full rounded-md px-3 py-2 border border-dark-700 bg-dark-800 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Email or username (try admin)"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                />
               </div>
-              <div>
-                <label htmlFor="password" className="block text-sm text-dark-300 mb-2">Password</label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="w-full rounded-md px-3 py-2 border border-dark-700 bg-dark-800 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Password (try admin)"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              {error && (
-                <div className="rounded-md bg-danger-900/40 border border-danger-700 p-3">
-                  <p className="text-sm text-danger-300">{error}</p>
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm text-dark-900 mb-2 text-center">Password</label>
+              <div className="flex justify-center">
+                <div className="input-with-icon w-[78%]">
+                  <svg viewBox="0 0 24 24"><path d="M6 10h12v8H6z" fill="none" stroke="currentColor"/><path d="M9 10V8a3 3 0 016 0v2" fill="none" stroke="currentColor"/></svg>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                  className="input-soft w-full rounded-2xl"
+                    placeholder="Password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                  />
                 </div>
-              )}
-
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <label className="flex items-center gap-2 text-sm text-dark-900">
+                <input type="checkbox" className="h-4 w-4 rounded border-dark-300" />
+                Remember me
+              </label>
+              <button type="button" className="text-sm rounded-full px-3 py-1 bg-white text-dark-900 hover:bg-dark-100 font-display">Forgot password?</button>
+            </div>
+            <div className="flex justify-center mt-4 mb-2">
+              <span className="text-sm text-dark-900">Forgot password?</span>
+            </div>
+            {error && (
+              <div className="rounded-md bg-danger-900/40 border border-danger-700 p-3">
+                <p className="text-sm text-danger-300">{error}</p>
+              </div>
+            )}
+            <div className="flex flex-col items-center gap-4 mt-2 mb-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+                className="w-[78%] rounded-full bg-primary-600 text-white py-3 text-base font-semibold hover:bg-primary-700 transition disabled:opacity-50"
               >
-                {loading ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Processing...
-                  </div>
-                ) : (
-                  isLogin ? 'Sign in' : 'Sign up'
-                )}
+                {loading ? 'Processing...' : 'Login'}
               </button>
-
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  className="text-sm text-primary-400 hover:text-primary-300"
-                  onClick={() => {
-                    setIsLogin(!isLogin)
-                    setError('')
-                  }}
-                >
-                  {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-                </button>
-                <p className="text-xs text-dark-400">Tip: use admin/admin for demo</p>
-              </div>
-            </form>
-          </div>
+              <button
+                type="button"
+                className="w-[78%] rounded-full border border-dark-900 text-dark-900 bg-white py-2 font-display hover:bg-dark-100"
+                onClick={() => {
+                  setIsLogin(false)
+                  setError('')
+                }}
+              >
+                Sign up
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

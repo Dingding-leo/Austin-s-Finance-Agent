@@ -61,6 +61,8 @@ export default {
       fontFamily: {
         'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
         'mono': ['Roboto Mono', 'ui-monospace', 'monospace'],
+        'display': ['Sora', 'Inter', 'ui-sans-serif', 'system-ui'],
+        'brand': ['Space Grotesk', 'Inter', 'ui-sans-serif', 'system-ui'],
       },
       animation: {
         'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',

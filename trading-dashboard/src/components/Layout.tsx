@@ -166,13 +166,20 @@ export default function Layout() {
                 {navigation.find(item => item.href === location.pathname)?.name || 'Dashboard'}
               </h1>
             </div>
-            <div className="flex items-center gap-x-4 lg:gap-x-6 ml-auto">
-              <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-dark-700" />
-              <div className="flex items-center gap-x-2">
-                <div className="h-2 w-2 rounded-full bg-success-400"></div>
-                <span className="text-sm text-dark-300">Connected</span>
-              </div>
+          <div className="flex items-center gap-x-4 lg:gap-x-6 ml-auto">
+            <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-dark-700" />
+            <div className="flex items-center gap-x-2">
+              <div className="h-2 w-2 rounded-full bg-success-400"></div>
+              <span className="text-sm text-dark-300">Connected</span>
             </div>
+            <button
+              onClick={handleSignOut}
+              className="ml-4 inline-flex items-center gap-2 rounded-md px-3 py-1.5 bg-dark-700 text-white hover:bg-dark-600"
+            >
+              <ArrowRightOnRectangleIcon className="h-5 w-5" />
+              Sign out
+            </button>
+          </div>
           </div>
         </div>
 
