@@ -70,21 +70,21 @@ export default function Login() {
       </div>
 
       <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="login-card w-full max-w-sm p-6 bg-white/10 backdrop-blur-md border border-white/20">
-          <h1 className="text-2xl font-bold text-white text-center mb-6 font-display">{isLogin ? 'Login' : 'Create Account'}</h1>
+        <div className="login-card w-full max-w-sm p-6 bg-white shadow-xl border border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-900 text-center mb-6 font-display">{isLogin ? 'Login' : 'Create Account'}</h1>
           <form className="space-y-6" onSubmit={handleSubmit}>
             {!isLogin && (
               <div>
-                <label htmlFor="name" className="block text-sm text-white mb-2 text-center">Full Name</label>
+                <label htmlFor="name" className="block text-sm text-gray-700 mb-2 text-center">Full Name</label>
                 <div className="flex justify-center">
                   <div className="input-with-icon w-[78%]">
-                    <svg viewBox="0 0 24 24" className="text-white/70"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="none" stroke="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" className="text-gray-400"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="none" stroke="currentColor"/></svg>
                     <input
                       id="name"
                       name="name"
                       type="text"
                       required
-                      className="input-soft w-full rounded-2xl text-white bg-white/10 border-white/20 placeholder-white/50"
+                      className="input-soft w-full rounded-2xl text-gray-900 bg-gray-50 border-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="Full Name"
                       value={formData.name}
                       onChange={handleInputChange}
@@ -94,17 +94,17 @@ export default function Login() {
               </div>
             )}
             <div>
-              <label htmlFor="email" className="block text-sm text-white mb-2 text-center">Email address</label>
+              <label htmlFor="email" className="block text-sm text-gray-700 mb-2 text-center">Email address</label>
               <div className="flex justify-center">
                 <div className="input-with-icon w-[78%]">
-                  <svg viewBox="0 0 24 24" className="text-white/70"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor"/><path d="M4 6l8 6 8-6" fill="none" stroke="currentColor"/></svg>
+                  <svg viewBox="0 0 24 24" className="text-gray-400"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor"/><path d="M4 6l8 6 8-6" fill="none" stroke="currentColor"/></svg>
                   <input
                     id="email"
                     name="email"
                     type="text"
                     autoComplete="email"
                     required
-                    className="input-soft w-full rounded-2xl text-white bg-white/10 border-white/20 placeholder-white/50"
+                    className="input-soft w-full rounded-2xl text-gray-900 bg-gray-50 border-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Email address"
                     value={formData.email}
                     onChange={handleInputChange}
@@ -113,17 +113,17 @@ export default function Login() {
               </div>
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm text-white mb-2 text-center">Password</label>
+              <label htmlFor="password" className="block text-sm text-gray-700 mb-2 text-center">Password</label>
               <div className="flex justify-center">
                 <div className="input-with-icon w-[78%]">
-                  <svg viewBox="0 0 24 24" className="text-white/70"><path d="M6 10h12v8H6z" fill="none" stroke="currentColor"/><path d="M9 10V8a3 3 0 016 0v2" fill="none" stroke="currentColor"/></svg>
+                  <svg viewBox="0 0 24 24" className="text-gray-400"><path d="M6 10h12v8H6z" fill="none" stroke="currentColor"/><path d="M9 10V8a3 3 0 016 0v2" fill="none" stroke="currentColor"/></svg>
                   <input
                     id="password"
                     name="password"
                     type="password"
                     autoComplete="current-password"
                     required
-                    className="input-soft w-full rounded-2xl text-white bg-white/10 border-white/20 placeholder-white/50"
+                    className="input-soft w-full rounded-2xl text-gray-900 bg-gray-50 border-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Password"
                     value={formData.password}
                     onChange={handleInputChange}
@@ -134,40 +134,40 @@ export default function Login() {
             {isLogin && (
               <>
                 <div className="flex items-center justify-center gap-4 mt-4">
-                  <label className="flex items-center gap-2 text-sm text-white">
-                    <input type="checkbox" className="h-4 w-4 rounded border-white/30 bg-transparent text-primary-500 focus:ring-offset-0 focus:ring-primary-500" />
+                  <label className="flex items-center gap-2 text-sm text-gray-600">
+                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                     Remember me
                   </label>
-                  <button type="button" className="text-sm rounded-full px-3 py-1 bg-white/10 text-white hover:bg-white/20 font-display transition border border-white/10">Forgot password?</button>
-                </div>
-                <div className="flex justify-center mt-4 mb-2">
-                  <span className="text-sm text-white/70 hover:text-white cursor-pointer transition">Forgot password?</span>
+                  <button type="button" className="text-sm text-primary-600 hover:text-primary-700 font-medium">Forgot password?</button>
                 </div>
               </>
             )}
             {error && (
-              <div className="rounded-md bg-danger-900/40 border border-danger-700 p-3">
-                <p className="text-sm text-danger-300">{error}</p>
+              <div className="rounded-md bg-red-50 border border-red-200 p-3 mx-auto w-[78%]">
+                <p className="text-sm text-red-600 text-center">{error}</p>
               </div>
             )}
-            <div className="flex flex-col items-center gap-4 mt-2 mb-2">
+            <div className="flex flex-col items-center gap-4 mt-6 mb-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-[78%] rounded-full bg-primary-600 text-white py-3 text-base font-semibold hover:bg-primary-700 transition disabled:opacity-50"
+                className="w-[78%] rounded-full bg-primary-600 text-white py-3 text-base font-semibold hover:bg-primary-700 transition disabled:opacity-50 shadow-lg shadow-primary-500/30"
               >
                 {loading ? 'Processing...' : (isLogin ? 'Login' : 'Create Account')}
               </button>
-              <button
-                type="button"
-                className="w-[78%] rounded-full border border-dark-900 text-dark-900 bg-white py-2 font-display hover:bg-dark-100"
-                onClick={() => {
-                  setIsLogin(!isLogin)
-                  setError('')
-                }}
-              >
-                {isLogin ? 'Sign up' : 'Back to Login'}
-              </button>
+              <div className="text-sm text-gray-600">
+                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                <button
+                  type="button"
+                  className="text-primary-600 hover:text-primary-700 font-semibold"
+                  onClick={() => {
+                    setIsLogin(!isLogin)
+                    setError('')
+                  }}
+                >
+                  {isLogin ? 'Sign up' : 'Login'}
+                </button>
+              </div>
             </div>
           </form>
         </div>
