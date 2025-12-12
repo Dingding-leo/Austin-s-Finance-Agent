@@ -59,10 +59,16 @@
 
   .input-soft::placeholder { color: #9ca3af; }
 
-  .input-with-icon { position: relative; }
   .input-with-icon svg {
     position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
     width: 18px; height: 18px; color: #64748b;
+    pointer-events: none;
+  }
+
+  .input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
   }
 
   .brand-glow svg { filter: drop-shadow(0 0 8px rgba(59,130,246,0.6)); }
