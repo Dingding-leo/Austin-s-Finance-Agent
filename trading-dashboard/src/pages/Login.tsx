@@ -70,21 +70,21 @@ export default function Login() {
       </div>
 
       <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="login-card w-full max-w-sm p-6">
-          <h1 className="text-2xl font-bold text-black text-center mb-6 font-display">{isLogin ? 'Login' : 'Create Account'}</h1>
+        <div className="login-card w-full max-w-sm p-6 bg-white/10 backdrop-blur-md border border-white/20">
+          <h1 className="text-2xl font-bold text-white text-center mb-6 font-display">{isLogin ? 'Login' : 'Create Account'}</h1>
           <form className="space-y-6" onSubmit={handleSubmit}>
             {!isLogin && (
               <div>
-                <label htmlFor="name" className="block text-sm text-black mb-2 text-center">Full Name</label>
+                <label htmlFor="name" className="block text-sm text-white mb-2 text-center">Full Name</label>
                 <div className="flex justify-center">
                   <div className="input-with-icon w-[78%]">
-                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="none" stroke="currentColor"/></svg>
+                    <svg viewBox="0 0 24 24" className="text-white/70"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="none" stroke="currentColor"/></svg>
                     <input
                       id="name"
                       name="name"
                       type="text"
                       required
-                      className="input-soft w-full rounded-2xl text-black"
+                      className="input-soft w-full rounded-2xl text-white bg-white/10 border-white/20 placeholder-white/50"
                       placeholder="Full Name"
                       value={formData.name}
                       onChange={handleInputChange}
@@ -94,17 +94,17 @@ export default function Login() {
               </div>
             )}
             <div>
-              <label htmlFor="email" className="block text-sm text-black mb-2 text-center">Email address</label>
+              <label htmlFor="email" className="block text-sm text-white mb-2 text-center">Email address</label>
               <div className="flex justify-center">
                 <div className="input-with-icon w-[78%]">
-                  <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor"/><path d="M4 6l8 6 8-6" fill="none" stroke="currentColor"/></svg>
+                  <svg viewBox="0 0 24 24" className="text-white/70"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor"/><path d="M4 6l8 6 8-6" fill="none" stroke="currentColor"/></svg>
                   <input
                     id="email"
                     name="email"
                     type="text"
                     autoComplete="email"
                     required
-                    className="input-soft w-full rounded-2xl text-black"
+                    className="input-soft w-full rounded-2xl text-white bg-white/10 border-white/20 placeholder-white/50"
                     placeholder="Email address"
                     value={formData.email}
                     onChange={handleInputChange}
@@ -113,17 +113,17 @@ export default function Login() {
               </div>
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm text-black mb-2 text-center">Password</label>
+              <label htmlFor="password" className="block text-sm text-white mb-2 text-center">Password</label>
               <div className="flex justify-center">
                 <div className="input-with-icon w-[78%]">
-                  <svg viewBox="0 0 24 24"><path d="M6 10h12v8H6z" fill="none" stroke="currentColor"/><path d="M9 10V8a3 3 0 016 0v2" fill="none" stroke="currentColor"/></svg>
+                  <svg viewBox="0 0 24 24" className="text-white/70"><path d="M6 10h12v8H6z" fill="none" stroke="currentColor"/><path d="M9 10V8a3 3 0 016 0v2" fill="none" stroke="currentColor"/></svg>
                   <input
                     id="password"
                     name="password"
                     type="password"
                     autoComplete="current-password"
                     required
-                    className="input-soft w-full rounded-2xl text-black"
+                    className="input-soft w-full rounded-2xl text-white bg-white/10 border-white/20 placeholder-white/50"
                     placeholder="Password"
                     value={formData.password}
                     onChange={handleInputChange}
@@ -134,14 +134,14 @@ export default function Login() {
             {isLogin && (
               <>
                 <div className="flex items-center justify-center gap-4 mt-4">
-                  <label className="flex items-center gap-2 text-sm text-black">
-                    <input type="checkbox" className="h-4 w-4 rounded border-dark-300" />
+                  <label className="flex items-center gap-2 text-sm text-white">
+                    <input type="checkbox" className="h-4 w-4 rounded border-white/30 bg-transparent text-primary-500 focus:ring-offset-0 focus:ring-primary-500" />
                     Remember me
                   </label>
-                  <button type="button" className="text-sm rounded-full px-3 py-1 bg-white text-black hover:bg-dark-100 font-display">Forgot password?</button>
+                  <button type="button" className="text-sm rounded-full px-3 py-1 bg-white/10 text-white hover:bg-white/20 font-display transition border border-white/10">Forgot password?</button>
                 </div>
                 <div className="flex justify-center mt-4 mb-2">
-                  <span className="text-sm text-black">Forgot password?</span>
+                  <span className="text-sm text-white/70 hover:text-white cursor-pointer transition">Forgot password?</span>
                 </div>
               </>
             )}
