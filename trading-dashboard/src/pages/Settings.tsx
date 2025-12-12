@@ -1,0 +1,22 @@
+
+
+export default function Settings() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Settings</h1>
+        <p className="text-dark-400">Configure your trading preferences and account settings</p>
+      </div>
+      
+      <div className="trading-card">
+        <div className="p-6 text-center">
+          <div className="animate-pulse">
+            <div className="h-4 bg-dark-700 rounded w-3/4 mx-auto mb-2"></div>
+            <div className="h-4 bg-dark-700 rounded w-1/2 mx-auto"></div>
+          </div>
+          <p className="text-dark-400 mt-4">Settings interface coming soon...</p>
+        </div>
+      </div>
+    </div>
+  )
+}
