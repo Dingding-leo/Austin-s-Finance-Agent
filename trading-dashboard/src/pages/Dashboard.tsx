@@ -68,34 +68,51 @@ export default function Dashboard() {
   useEffect(() => {
     let timer: any
     const run = async () => {
+      console.log('Account fetch run started')
       try {
         const mpw = localStorage.getItem('okx_master') || ''
-        if (!mpw) { setAccountErr('Master password not set in Settings'); return }
-        if (!user) { setAccountErr('Not logged in'); return }
+        if (!mpw) { 
+          console.log('No master password')
+          setAccountErr('Master password not set in Settings'); return 
+        }
+        if (!user) { 
+          console.log('No user')
+          setAccountErr('Not logged in'); return 
+        }
         // @ts-ignore
         const { supabase, supabaseUrl } = await import('../services/supabase')
         if (!supabase) { setAccountErr('Supabase client not configured'); return }
+        
+        console.log('Fetching account value...')
         const session = await supabase.auth.getSession()
         const token = session?.data?.session?.access_token || ''
         if (!token) { setAccountErr('No session token'); return }
-        const invoke = await supabase.functions.invoke('account-value', { body: { masterPassword: mpw } })
-        if (invoke.error || (invoke.data && invoke.data.ok === false)) {
-          const res = await fetch(`${supabaseUrl}/functions/v1/account-value`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({ masterPassword: mpw })
-          })
-          const json = await res.json().catch(() => ({}))
-          if (!res.ok || json?.ok === false) throw new Error(String(json?.error || json?.data || res.statusText || 'Function error'))
-          setAccountValue(Number(json?.totalEq || 0))
-        } else {
-          setAccountValue(Number(invoke.data?.totalEq || 0))
+
+        // Try direct fetch first as it's more transparent for debugging
+         const res = await fetch(`${supabaseUrl}/functions/v1/account-value`, {
+             method: 'POST',
+             headers: {
+               'Content-Type': 'application/json',
+               'Authorization': `Bearer ${token}`,
+               'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+             },
+             body: JSON.stringify({ masterPassword: mpw })
+         })
+        
+        const json = await res.json().catch((e) => {
+            console.error('JSON parse error:', e)
+            return {}
+        })
+        console.log('Account fetch result:', res.status, json)
+
+        if (!res.ok || json?.ok === false) {
+             throw new Error(String(json?.error || json?.data || res.statusText || 'Function error'))
         }
+        
+        setAccountValue(Number(json?.totalEq || 0))
         setAccountErr('')
       } catch (e: any) {
+        console.error('Account fetch error:', e)
         setAccountErr(e?.message || 'Failed to fetch account value')
       }
     }
