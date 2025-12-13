@@ -14,7 +14,8 @@ async function decryptBundle(masterPassword: string, bundle: { salt: number[]; i
   const iv = new Uint8Array(bundle.iv)
   const ct = new Uint8Array(bundle.ct)
   const baseKey = await crypto.subtle.importKey('raw', enc.encode(masterPassword), { name: 'PBKDF2' }, false, ['deriveBits','deriveKey'])
-  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, baseKey, { name: 'AES-GCM', length: 256 }, false, ['decrypt'])
+  // Reduced iterations to match client-side (5000) for performance
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 5000, hash: 'SHA-256' }, baseKey, { name: 'AES-GCM', length: 256 }, false, ['decrypt'])
   const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct)
   const text = new TextDecoder().decode(new Uint8Array(plainBuf))
   return JSON.parse(text)
@@ -74,22 +75,31 @@ export default async function handler(req: Request): Promise<Response> {
     const signature = await okxSign(secret, prehash)
     
     console.log('Fetching OKX balance...')
-    const res = await fetch(`${host}${path}`, {
-      method,
-      headers: {
-        'OK-ACCESS-KEY': apiKey,
-        'OK-ACCESS-SIGN': signature,
-        'OK-ACCESS-TIMESTAMP': timestamp,
-        'OK-ACCESS-PASSPHRASE': passphrase,
-      }
-    })
-    
-    const out = await res.json()
-    console.log('OKX status:', res.status)
-    if (!res.ok) return new Response(JSON.stringify({ ok: false, status: res.status, data: out }), { status: res.status, headers: cors })
-    
-    const totalEq = Number(out?.data?.[0]?.totalEq || 0)
-    return new Response(JSON.stringify({ ok: true, totalEq, currency: 'USDT' }), { status: 200, headers: cors })
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 8000) // 8s timeout
+    try {
+      const res = await fetch(`${host}${path}`, {
+        method,
+        headers: {
+          'OK-ACCESS-KEY': apiKey,
+          'OK-ACCESS-SIGN': signature,
+          'OK-ACCESS-TIMESTAMP': timestamp,
+          'OK-ACCESS-PASSPHRASE': passphrase,
+        },
+        signal: controller.signal
+      })
+      clearTimeout(timeout)
+      
+      const out = await res.json()
+      console.log('OKX status:', res.status)
+      if (!res.ok) return new Response(JSON.stringify({ ok: false, status: res.status, data: out }), { status: res.status, headers: cors })
+      
+      const totalEq = Number(out?.data?.[0]?.totalEq || 0)
+      return new Response(JSON.stringify({ ok: true, totalEq, currency: 'USDT' }), { status: 200, headers: cors })
+    } catch (e) {
+      clearTimeout(timeout)
+      throw e
+    }
   } catch (e) {
     console.error('Handler error:', e)
     return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 500, headers: cors })
