@@ -14,8 +14,8 @@ async function decryptBundle(masterPassword: string, bundle: { salt: number[]; i
   const iv = new Uint8Array(bundle.iv)
   const ct = new Uint8Array(bundle.ct)
   const baseKey = await crypto.subtle.importKey('raw', enc.encode(masterPassword), { name: 'PBKDF2' }, false, ['deriveBits','deriveKey'])
-  // Reduced iterations to match client-side (5000) for performance
-  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 5000, hash: 'SHA-256' }, baseKey, { name: 'AES-GCM', length: 256 }, false, ['decrypt'])
+  // Iterations must match SettingsPanel (1000)
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 1000, hash: 'SHA-256' }, baseKey, { name: 'AES-GCM', length: 256 }, false, ['decrypt'])
   const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct)
   const text = new TextDecoder().decode(new Uint8Array(plainBuf))
   return JSON.parse(text)
