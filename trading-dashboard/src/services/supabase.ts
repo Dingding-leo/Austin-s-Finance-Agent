@@ -281,7 +281,7 @@ export const strategyService = {
     if (error) throw error
   },
 
-  async executeStrategy(strategyId: string, symbol: string, action: 'BUY' | 'SELL', quantity: number) {
+  async executeStrategy(strategyId: string, symbol: string, action: 'BUY' | 'SELL', quantity: number, opts?: { masterPassword: string; dryRun?: boolean; tp?: number; sl?: number; leverage?: number; allocationPct?: number }) {
     if (!supabase) {
       return {
         orderId: Date.now().toString(),
@@ -293,7 +293,7 @@ export const strategyService = {
     const { data, error } = await supabase
       .functions
       .invoke('execute-strategy', {
-        body: { strategyId, symbol, action, quantity },
+        body: { strategyId, symbol, action, quantity, masterPassword: opts?.masterPassword || '', dryRun: opts?.dryRun ?? true, tp: opts?.tp, sl: opts?.sl, leverage: opts?.leverage, allocationPct: opts?.allocationPct },
       })
     
     if (error) throw error
@@ -486,6 +486,35 @@ export const positionService = {
       .eq('id', id)
     
     if (error) throw error
+  },
+}
+
+// OKX credentials service (encrypted bundle storage)
+export const okxCredentialsService = {
+  async saveEncrypted(userId: string, bundle: { salt: number[]; iv: number[]; ct: number[] }) {
+    if (!supabase) {
+      localStorage.setItem(`okx_enc_${userId}`, JSON.stringify(bundle))
+      return { ok: true }
+    }
+    const { error } = await supabase
+      .from('okx_credentials')
+      .upsert({ user_id: userId, salt: bundle.salt, iv: bundle.iv, ct: bundle.ct, updated_at: new Date().toISOString() })
+    if (error) throw error
+    return { ok: true }
+  },
+  async loadEncrypted(userId: string) {
+    if (!supabase) {
+      const raw = localStorage.getItem(`okx_enc_${userId}`)
+      return raw ? JSON.parse(raw) : null
+    }
+    const { data, error } = await supabase
+      .from('okx_credentials')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (error) throw error
+    if (!data) return null
+    return { salt: data.salt, iv: data.iv, ct: data.ct }
   },
 }
 

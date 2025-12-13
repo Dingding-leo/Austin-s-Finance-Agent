@@ -21,6 +21,8 @@ export default function QuickOrderPanel({ selectedSymbol, currentPrice }: QuickO
   const [price, setPrice] = useState('')
   const [takeProfit, setTakeProfit] = useState('')
   const [stopLoss, setStopLoss] = useState('')
+  const [leverage, setLeverage] = useState('3')
+  const [allocationPct, setAllocationPct] = useState('2')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -189,34 +191,58 @@ export default function QuickOrderPanel({ selectedSymbol, currentPrice }: QuickO
         </div>
       </div>
 
-      {/* Risk Management */}
+      {/* Trading Parameters */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-dark-300">Risk Management</span>
+          <span className="text-sm font-medium text-dark-300">Trading Parameters</span>
           <ScaleIcon className="h-4 w-4 text-dark-400" />
         </div>
-        
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs text-dark-400 mb-1">Recommended Leverage</label>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={leverage}
+              onChange={(e) => setLeverage(e.target.value)}
+              className="w-full input-trading text-sm"
+              placeholder="3"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-dark-400 mb-1">Allocation (% of account)</label>
+            <input
+              type="number"
+              min="0.1"
+              step="0.1"
+              value={allocationPct}
+              onChange={(e) => setAllocationPct(e.target.value)}
+              className="w-full input-trading text-sm"
+              placeholder="2"
+            />
+          </div>
+        </div>
         <div>
-          <label className="block text-xs text-dark-400 mb-1">Take Profit (Optional)</label>
+          <label className="block text-xs text-dark-400 mb-1">Take Profit (TP)</label>
           <input
             type="number"
             step="0.01"
             value={takeProfit}
             onChange={(e) => setTakeProfit(e.target.value)}
             className="w-full input-trading text-sm"
-            placeholder="Price level"
+            placeholder="TP price level"
           />
         </div>
-        
         <div>
-          <label className="block text-xs text-dark-400 mb-1">Stop Loss (Optional)</label>
+          <label className="block text-xs text-dark-400 mb-1">Stop Loss (SL)</label>
           <input
             type="number"
             step="0.01"
             value={stopLoss}
             onChange={(e) => setStopLoss(e.target.value)}
             className="w-full input-trading text-sm"
-            placeholder="Price level"
+            placeholder="SL price level"
           />
         </div>
       </div>

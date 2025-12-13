@@ -1,107 +1,60 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { marketService, strategyService } from '../services/supabase'
-import MarketDataPanel from '../components/MarketDataPanel'
 import IntradayReportBar from '../components/IntradayReportBar'
 import StrategySignals from '../components/StrategySignals'
-import QuickOrderPanel from '../components/QuickOrderPanel'
-import PriceChart from '../components/PriceChart'
-import type { MarketPrice, Strategy, StrategySignal } from '../types'
-
-const DEFAULT_SYMBOLS = ['BTC-USDT', 'ETH-USDT', 'SOL-USDT']
+import type { StrategySignal } from '../types'
+// Temporarily remove other sections; will add back incrementally
+import SettingsPanel from '../components/SettingsPanel'
+ 
 
 export default function Dashboard() {
-  const { user } = useAuth()
-  const [prices, setPrices] = useState<MarketPrice[]>([])
-  const [strategies, setStrategies] = useState<Strategy[]>([])
+  useAuth()
+  const [loading] = useState(false)
   const [signals, setSignals] = useState<StrategySignal[]>([])
-  const [selectedSymbol, setSelectedSymbol] = useState('BTC-USDT')
-  const [loading, setLoading] = useState(true)
-  const [priceSubscription, setPriceSubscription] = useState<(() => void) | null>(null)
+  const [strategyCollapsed, setStrategyCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('strategyPanelCollapsed') === '1'
+    } catch { return false }
+  })
 
   useEffect(() => {
-    loadInitialData()
-    return () => {
-      if (priceSubscription) {
-        priceSubscription()
-      }
-    }
-  }, [])
-
-  const loadInitialData = async () => {
-    try {
-      setLoading(true)
-      
-      // Load market prices
-      const marketPrices = await marketService.getPrices(DEFAULT_SYMBOLS)
-      setPrices(marketPrices)
-      
-      // Load strategies
-      if (user) {
-        const userStrategies = await strategyService.getStrategies(user.id)
-        setStrategies(userStrategies)
-      }
-      
-      // Subscribe to real-time price updates
-      const unsubscribe = marketService.subscribeToPrices(DEFAULT_SYMBOLS, (updatedPrice) => {
-        setPrices(prev => {
-          const updated = prev.map(p => 
-            p.symbol === updatedPrice.symbol ? updatedPrice : p
-          )
-          return updated.length > 0 ? updated : [updatedPrice]
-        })
-      })
-      setPriceSubscription(() => unsubscribe)
-      
-      // Generate mock signals for active strategies
-      const mockSignals: StrategySignal[] = strategies
-        .filter(s => s.is_active)
-        .map(strategy => ({
-          id: `${strategy.id}-${Date.now()}`,
-          strategy_id: strategy.id,
-          symbol: selectedSymbol,
-          action: Math.random() > 0.5 ? 'BUY' : 'SELL',
-          confidence: Math.random() * 0.4 + 0.6,
-          metadata: {
-            entry_reason: 'Technical analysis signal',
-            news_analysis: 'Positive market sentiment',
-            technical_conditions: 'RSI oversold, MACD bullish crossover',
-            risk_assessment: 'Low risk, favorable risk-reward ratio',
-          },
-          created_at: new Date().toISOString(),
-        }))
-      setSignals(mockSignals)
-      
-    } catch (error) {
-      console.error('Error loading dashboard data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSymbolSelect = (symbol: string) => {
-    setSelectedSymbol(symbol)
-  }
-
-  const handleSignalRefresh = async () => {
-    // Refresh signals
-    const mockSignals: StrategySignal[] = strategies
-      .filter(s => s.is_active)
-      .map(strategy => ({
-        id: `${strategy.id}-${Date.now()}`,
-        strategy_id: strategy.id,
-        symbol: selectedSymbol,
-        action: Math.random() > 0.5 ? 'BUY' : 'SELL',
-        confidence: Math.random() * 0.4 + 0.6,
+    const seedSignals: StrategySignal[] = [
+      {
+        id: `seed-${Date.now()}`,
+        strategy_id: 'seed-strategy-1',
+        symbol: 'BTC-USDT',
+        action: 'BUY',
+        confidence: 0.72,
         metadata: {
-          entry_reason: 'Technical analysis signal',
-          news_analysis: 'Positive market sentiment',
-          technical_conditions: 'RSI oversold, MACD bullish crossover',
-          risk_assessment: 'Low risk, favorable risk-reward ratio',
+          entry_reason: 'Macro sentiment supportive; report bias aligns with technical momentum',
+          news_analysis: 'No major negative catalysts in last 6h',
+          technical_conditions: 'Higher lows, reclaim of key MA, bullish RSI structure',
+          risk_assessment: 'Moderate risk; define stop below recent swing low',
         },
         created_at: new Date().toISOString(),
-      }))
-    setSignals(mockSignals)
+      },
+      {
+        id: `seed-${Date.now()+1}`,
+        strategy_id: 'seed-strategy-2',
+        symbol: 'ETH-USDT',
+        action: 'HOLD',
+        confidence: 0.65,
+        metadata: {
+          entry_reason: 'Mixed signals; wait for confirmation on volume breakout',
+          news_analysis: 'Neutral headlines; watch funding & OI',
+          technical_conditions: 'Range-bound; volatility contraction near resistance',
+          risk_assessment: 'Low-moderate; avoid chasing until breakout',
+        },
+        created_at: new Date().toISOString(),
+      }
+    ]
+    setSignals(seedSignals)
+  }, [])
+
+  const toggleStrategyPanel = () => {
+    const next = !strategyCollapsed
+    setStrategyCollapsed(next)
+    try { localStorage.setItem('strategyPanelCollapsed', next ? '1' : '0') } catch {}
   }
 
   if (loading) {
@@ -129,85 +82,31 @@ export default function Dashboard() {
         {/* Intraday Report Section */}
         <IntradayReportBar />
 
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Market Data and Chart */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Market Data Panel */}
-            <div className="trading-card">
-              <div className="p-4 border-b border-dark-700">
-                <h2 className="text-lg font-semibold text-white">Market Overview</h2>
-                <p className="text-sm text-dark-400">Real-time price feeds and market data</p>
-              </div>
-              <MarketDataPanel 
-                prices={prices} 
-                onSymbolSelect={handleSymbolSelect}
-                selectedSymbol={selectedSymbol}
-              />
+        {/* Strategy Signals Panel */}
+        <div className="trading-card mt-6">
+          <div className="p-4 border-b border-dark-700 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Strategy Signals</h2>
+              <p className="text-sm text-dark-400">Live trading signals from active strategies</p>
             </div>
-
-            {/* Price Chart */}
-            <div className="trading-card">
-              <div className="p-4 border-b border-dark-700">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-white">{selectedSymbol} Chart</h2>
-                    <p className="text-sm text-dark-400">Interactive price chart with technical indicators</p>
-                  </div>
-                  <div className="flex space-x-2">
-                    {['1m', '5m', '15m', '1h', '4h', '1d'].map((timeframe) => (
-                      <button
-                        key={timeframe}
-                        className="px-2 py-1 text-xs font-medium rounded bg-dark-700 text-dark-300 hover:bg-dark-600"
-                      >
-                        {timeframe}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="p-4">
-                <PriceChart symbol={selectedSymbol} />
-              </div>
-            </div>
+            <button
+              onClick={toggleStrategyPanel}
+              className="px-3 py-1 text-xs font-medium rounded bg-dark-700 text-dark-200 hover:bg-dark-600"
+            >
+              {strategyCollapsed ? 'Expand' : 'Collapse'}
+            </button>
           </div>
-
-          {/* Right Column - Strategy Signals and Quick Order */}
-          <div className="space-y-6">
-            {/* Strategy Signals */}
-            <div className="trading-card">
-              <div className="p-4 border-b border-dark-700 flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Strategy Signals</h2>
-                  <p className="text-sm text-dark-400">Live trading signals from active strategies</p>
-                </div>
-                <button
-                  onClick={handleSignalRefresh}
-                  className="px-3 py-1 text-xs font-medium rounded bg-primary-600 text-white hover:bg-primary-700"
-                >
-                  Refresh
-                </button>
-              </div>
-              <StrategySignals 
-                signals={signals}
-                strategies={strategies}
-                onSignalSelect={(signal) => console.log('Signal selected:', signal)}
-              />
-            </div>
-
-            {/* Quick Order Panel */}
-            <div className="trading-card">
-              <div className="p-4 border-b border-dark-700">
-                <h2 className="text-lg font-semibold text-white">Quick Order</h2>
-                <p className="text-sm text-dark-400">Execute trades with predefined settings</p>
-              </div>
-              <QuickOrderPanel 
-                selectedSymbol={selectedSymbol}
-                currentPrice={prices.find(p => p.symbol === selectedSymbol)?.last || 0}
-              />
-            </div>
-          </div>
+          {!strategyCollapsed && (
+            <StrategySignals 
+              signals={signals}
+              strategies={[]}
+              onSignalSelect={(signal) => console.log('Signal selected:', signal)}
+            />
+          )}
         </div>
+
+        {/* Secure Settings Panel */}
+        <SettingsPanel />
       </div>
     </div>
   )

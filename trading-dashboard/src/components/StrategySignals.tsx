@@ -1,5 +1,6 @@
 
 import type { StrategySignal, Strategy } from '../types'
+import { useEffect, useState } from 'react'
 import { 
   ArrowUpIcon, 
   ArrowDownIcon, 
@@ -15,6 +16,8 @@ interface StrategySignalsProps {
 }
 
 export default function StrategySignals({ signals, strategies, onSignalSelect }: StrategySignalsProps) {
+  const [localSignals, setLocalSignals] = useState<StrategySignal[]>(signals)
+  useEffect(() => { setLocalSignals(signals) }, [signals])
   const getStrategyName = (strategyId: string) => {
     const strategy = strategies.find(s => s.id === strategyId)
     return strategy?.name || 'Unknown Strategy'
@@ -58,7 +61,7 @@ export default function StrategySignals({ signals, strategies, onSignalSelect }:
     }
   }
 
-  if (signals.length === 0) {
+  if (localSignals.length === 0) {
     return (
       <div className="p-6 text-center">
         <ChartBarIcon className="h-12 w-12 text-dark-500 mx-auto mb-4" />
@@ -72,7 +75,7 @@ export default function StrategySignals({ signals, strategies, onSignalSelect }:
 
   return (
     <div className="p-4 space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
-      {signals.map((signal) => (
+      {localSignals.map((signal, idx) => (
         <div
           key={signal.id}
           onClick={() => onSignalSelect(signal)}
@@ -99,10 +102,24 @@ export default function StrategySignals({ signals, strategies, onSignalSelect }:
             </div>
           </div>
 
-          {/* Symbol and Price */}
+          {/* Symbol and Time */}
           <div className="mb-3">
             <div className="flex items-center justify-between">
-              <span className="text-lg font-bold text-white">{signal.symbol}</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-lg font-bold text-white">{signal.symbol}</span>
+                <select
+                  value={signal.symbol}
+                  onChange={(e) => {
+                    const next = [...localSignals]
+                    next[idx] = { ...signal, symbol: e.target.value }
+                    setLocalSignals(next)
+                  }}
+                  className="px-2 py-1 rounded bg-dark-700 text-dark-200 text-xs"
+                >
+                  <option value="BTC-USDT">BTC-USDT</option>
+                  <option value="ETH-USDT">ETH-USDT</option>
+                </select>
+              </div>
               <span className="text-sm text-dark-400">
                 {new Date(signal.created_at).toLocaleTimeString()}
               </span>
@@ -138,7 +155,18 @@ export default function StrategySignals({ signals, strategies, onSignalSelect }:
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                console.log('Execute signal:', signal)
+                try {
+                  const qtyStr = window.prompt('Enter quantity to execute:', signal.symbol.startsWith('BTC') ? '0.01' : '0.1') || '0'
+                  const qty = parseFloat(qtyStr)
+                  const mpw = window.prompt('Enter master password to decrypt OKX keys:', '') || ''
+                  if (!qty || !mpw) return
+                  // @ts-ignore
+                  import('../services/supabase').then(({ strategyService }) => {
+                    strategyService.executeStrategy(signal.strategy_id, signal.symbol, signal.action as any, qty, { masterPassword: mpw, dryRun: false }).then(res => {
+                      alert((res && res.ok) ? 'Order sent' : 'Order failed')
+                    }).catch(err => alert('Error: ' + (err?.message || err)))
+                  })
+                } catch {}
               }}
               className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
                 signal.action === 'BUY'
