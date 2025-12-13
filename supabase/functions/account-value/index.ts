@@ -21,20 +21,26 @@ async function okxSign(secret: string, prehash: string) {
   return b64(sig)
 }
 
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, content-type',
+}
+
 export default async function handler(req: Request): Promise<Response> {
   try {
-    if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 })
+    if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+    if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: cors })
     const SUPABASE_URL = Deno.env.get('SB_URL') ?? Deno.env.get('SUPABASE_URL')!
     const SUPABASE_ANON_KEY = Deno.env.get('SB_ANON_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY')!
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } })
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: cors })
     const body = await req.json()
     const { masterPassword } = body as any
     if (!masterPassword) return new Response(JSON.stringify({ error: 'Missing masterPassword' }), { status: 400 })
     const { data: row, error } = await supabase.from('okx_credentials').select('*').eq('user_id', user.id).maybeSingle()
     if (error) throw error
-    if (!row) return new Response(JSON.stringify({ error: 'No OKX credentials stored' }), { status: 404 })
+    if (!row) return new Response(JSON.stringify({ error: 'No OKX credentials stored' }), { status: 404, headers: cors })
     const creds = await decryptBundle(masterPassword, { salt: row.salt, iv: row.iv, ct: row.ct })
     const apiKey = creds.apiKey, secret = creds.secretKey, passphrase = creds.passphrase
     const host = 'https://www.okx.com'
@@ -53,10 +59,10 @@ export default async function handler(req: Request): Promise<Response> {
       }
     })
     const out = await res.json()
-    if (!res.ok) return new Response(JSON.stringify({ ok: false, status: res.status, data: out }), { status: res.status })
+    if (!res.ok) return new Response(JSON.stringify({ ok: false, status: res.status, data: out }), { status: res.status, headers: cors })
     const totalEq = Number(out?.data?.[0]?.totalEq || 0)
-    return new Response(JSON.stringify({ ok: true, totalEq, currency: 'USDT' }), { status: 200 })
+    return new Response(JSON.stringify({ ok: true, totalEq, currency: 'USDT' }), { status: 200, headers: cors })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 500 })
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 500, headers: cors })
   }
 }

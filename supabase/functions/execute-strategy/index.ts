@@ -27,9 +27,15 @@ async function okxSign(secret: string, prehash: string) {
   return toBase64(new Uint8Array(sig))
 }
 
-async function handler(req: Request): Promise<Response> {
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, content-type',
+}
+
+export default async function handler(req: Request): Promise<Response> {
   try {
-    if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 })
+    if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+    if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: cors })
 
     const SUPABASE_URL = Deno.env.get('SB_URL') ?? Deno.env.get('SUPABASE_URL')!
     const SUPABASE_ANON_KEY = Deno.env.get('SB_ANON_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY')!
@@ -38,7 +44,7 @@ async function handler(req: Request): Promise<Response> {
     })
 
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: cors })
 
     const body = await req.json()
     const { strategyId, symbol, action, quantity, masterPassword, dryRun = true, tp, sl, leverage, allocationPct } = body as any
@@ -50,7 +56,7 @@ async function handler(req: Request): Promise<Response> {
       .eq('user_id', user.id)
       .maybeSingle()
     if (error) throw error
-    if (!row) return new Response(JSON.stringify({ error: 'No OKX credentials stored' }), { status: 404 })
+    if (!row) return new Response(JSON.stringify({ error: 'No OKX credentials stored' }), { status: 404, headers: cors })
 
     const creds = await decryptBundle(masterPassword, { salt: row.salt, iv: row.iv, ct: row.ct })
     const apiKey = creds.apiKey
@@ -79,7 +85,7 @@ async function handler(req: Request): Promise<Response> {
     const signature = await okxSign(secret, prehash)
 
     if (dryRun) {
-      return new Response(JSON.stringify({ ok: true, dryRun: true, request: { path, payload } }), { status: 200 })
+      return new Response(JSON.stringify({ ok: true, dryRun: true, request: { path, payload } }), { status: 200, headers: cors })
     }
 
     const res = await fetch(`${host}${path}`, {
@@ -94,9 +100,9 @@ async function handler(req: Request): Promise<Response> {
       body: bodyStr,
     })
     const out = await res.json()
-    return new Response(JSON.stringify({ ok: res.ok, status: res.status, data: out }), { status: res.ok ? 200 : res.status })
+    return new Response(JSON.stringify({ ok: res.ok, status: res.status, data: out }), { status: res.ok ? 200 : res.status, headers: cors })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 500 })
+    return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 500, headers: cors })
   }
 }
 
