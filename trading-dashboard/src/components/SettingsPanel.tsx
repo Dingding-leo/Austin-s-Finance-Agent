@@ -7,8 +7,8 @@ const encKeyName = 'okx_enc'
 async function deriveKey(passphrase: string, salt: BufferSource) {
   const enc = new TextEncoder()
   const baseKey = await crypto.subtle.importKey('raw', enc.encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey'])
-  // Reduced iterations to 1,000 to minimize Edge Function CPU usage and latency
-  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 1000, hash: 'SHA-256' }, baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])
+  // Minimal iterations for Edge Function performance (debugging timeout issues)
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 1, hash: 'SHA-256' }, baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])
 }
 
 async function encryptPayload(passphrase: string, payload: Record<string, string>) {

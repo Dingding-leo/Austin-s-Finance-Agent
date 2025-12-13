@@ -98,7 +98,7 @@ export default function Dashboard() {
 
         // Try direct fetch first as it's more transparent for debugging
         const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 20000) // 20s frontend timeout
+        const timeout = setTimeout(() => controller.abort(), 30000) // 30s frontend timeout
         
         try {
           setStatusStep('Sending Request...')
