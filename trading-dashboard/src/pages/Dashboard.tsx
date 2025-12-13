@@ -89,31 +89,46 @@ export default function Dashboard() {
         if (!token) { setAccountErr('No session token'); return }
 
         // Try direct fetch first as it's more transparent for debugging
-         const res = await fetch(`${supabaseUrl}/functions/v1/account-value`, {
-             method: 'POST',
-             headers: {
-               'Content-Type': 'application/json',
-               'Authorization': `Bearer ${token}`,
-               'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-             },
-             body: JSON.stringify({ masterPassword: mpw })
-         })
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 10000) // 10s frontend timeout
         
-        const json = await res.json().catch((e) => {
-            console.error('JSON parse error:', e)
-            return {}
-        })
-        console.log('Account fetch result:', res.status, json)
+        try {
+          const res = await fetch(`${supabaseUrl}/functions/v1/account-value`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              },
+              body: JSON.stringify({ masterPassword: mpw }),
+              signal: controller.signal
+          })
+          clearTimeout(timeout)
+          
+          const json = await res.json().catch((e) => {
+              console.error('JSON parse error:', e)
+              return { error: 'Invalid JSON response' }
+          })
+          console.log('Account fetch result:', res.status, json)
 
-        if (!res.ok || json?.ok === false) {
-             throw new Error(String(json?.error || json?.data || res.statusText || 'Function error'))
+          if (!res.ok || json?.ok === false) {
+               throw new Error(String(json?.error || json?.data || res.statusText || 'Function error'))
+          }
+          
+          setAccountValue(Number(json?.totalEq || 0))
+          setAccountErr('')
+        } catch (fetchErr: any) {
+           clearTimeout(timeout)
+           if (fetchErr.name === 'AbortError') {
+             throw new Error('Request timed out (frontend)')
+           }
+           throw fetchErr
         }
-        
-        setAccountValue(Number(json?.totalEq || 0))
-        setAccountErr('')
       } catch (e: any) {
         console.error('Account fetch error:', e)
-        setAccountErr(e?.message || 'Failed to fetch account value')
+        // Handle weird non-Error objects
+        const msg = e?.message || (typeof e === 'string' ? e : JSON.stringify(e))
+        setAccountErr(msg || 'Failed to fetch account value')
       }
     }
     run()
