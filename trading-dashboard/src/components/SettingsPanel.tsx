@@ -34,6 +34,9 @@ export default function SettingsPanel() {
   const [secretKey, setSecretKey] = useState('')
   const [passphrase, setPassphrase] = useState('')
   const [masterPassword, setMasterPassword] = useState('')
+  const [rememberForDashboard, setRememberForDashboard] = useState<boolean>(() => {
+    try { return localStorage.getItem('okx_master_remember') === '1' } catch { return false }
+  })
   const [status, setStatus] = useState('')
 
   useEffect(() => {
@@ -54,6 +57,15 @@ export default function SettingsPanel() {
     } catch {
       setStatus('Save failed')
     }
+    try {
+      if (rememberForDashboard) {
+        localStorage.setItem('okx_master', masterPassword)
+        localStorage.setItem('okx_master_remember', '1')
+      } else {
+        localStorage.removeItem('okx_master')
+        localStorage.setItem('okx_master_remember', '0')
+      }
+    } catch {}
   }
 
   const loadLocal = async () => {
@@ -109,6 +121,10 @@ export default function SettingsPanel() {
         <div>
           <label className="block text-xs text-dark-400 mb-1">Master Password</label>
           <input type="password" value={masterPassword} onChange={(e) => setMasterPassword(e.target.value)} className="w-full input-trading text-sm" placeholder="Required for encryption/decryption" />
+        </div>
+        <div className="flex items-center gap-2">
+          <input id="remember_master" type="checkbox" checked={rememberForDashboard} onChange={(e) => setRememberForDashboard(e.target.checked)} />
+          <label htmlFor="remember_master" className="text-xs text-dark-400">Use this master password for dashboard queries</label>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
