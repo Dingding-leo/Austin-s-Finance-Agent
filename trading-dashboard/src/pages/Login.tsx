@@ -45,13 +45,13 @@ export default function Login() {
 
   return (
     <div className="min-h-screen hero-wrap relative">
-      <div className="absolute top-20 left-1/2 -translate-x-1/2 flex items-center gap-3 brand-glow">
+      <div className="absolute top-32 left-1/2 -translate-x-1/2 flex items-center gap-4 brand-glow">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-400">
           <path d="M12 2c5.5 0 10 4.5 10 10 0 5.5-4.5 10-10 10S2 17.5 2 12 6.5 2 12 2z" stroke="currentColor" strokeWidth="1.2" />
           <path d="M8 10c1.5-3 6.5-3 8 0M8 14c1.5 3 6.5 3 8 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           <path d="M12 5v14" stroke="currentColor" strokeWidth="1.2" />
         </svg>
-        <span className="font-display text-white text-3xl md:text-4xl tracking-wide">AI TRADING</span>
+        <span className="font-display text-white text-5xl md:text-6xl tracking-wide">AI TRADING</span>
       </div>
 
       <div className="absolute right-12 top-24 hidden lg:block opacity-80 brand-glow">
@@ -70,12 +70,12 @@ export default function Login() {
       </div>
 
       <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="login-card w-full max-w-sm p-6 bg-white shadow-xl border border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900 text-center mb-6 font-display">{isLogin ? 'Login' : 'Create Account'}</h1>
+        <div className="login-card w-[78%] max-w-5xl p-8 bg-white shadow-xl border border-gray-200 rounded-2xl">
+          <h1 className="text-3xl md:text-4xl font-bold text-center mb-8 font-display tracking-wide" style={{ color: '#000' }}>{isLogin ? 'Login' : 'Create Account'}</h1>
           <form className="space-y-6" onSubmit={handleSubmit}>
             {!isLogin && (
               <div>
-                <label htmlFor="name" className="block text-sm text-gray-700 mb-2 text-center">Full Name</label>
+                <label htmlFor="name" className="block text-sm mb-2 text-center" style={{ color: '#000' }}>Full Name</label>
                 <div className="flex justify-center">
                   <div className="input-with-icon w-[78%]">
                     <svg viewBox="0 0 24 24" className="text-gray-400"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="none" stroke="currentColor"/></svg>
@@ -94,7 +94,7 @@ export default function Login() {
               </div>
             )}
             <div>
-              <label htmlFor="email" className="block text-sm text-gray-700 mb-2 text-center">Email address</label>
+              <label htmlFor="email" className="block text-sm mb-2 text-center" style={{ color: '#000' }}>Email address</label>
               <div className="flex justify-center">
                 <div className="input-with-icon w-[78%]">
                   <svg viewBox="0 0 24 24" className="text-gray-400"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor"/><path d="M4 6l8 6 8-6" fill="none" stroke="currentColor"/></svg>
@@ -113,7 +113,7 @@ export default function Login() {
               </div>
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm text-gray-700 mb-2 text-center">Password</label>
+              <label htmlFor="password" className="block text-sm mb-2 text-center" style={{ color: '#000' }}>Password</label>
               <div className="flex justify-center">
                 <div className="input-with-icon w-[78%]">
                   <svg viewBox="0 0 24 24" className="text-gray-400"><path d="M6 10h12v8H6z" fill="none" stroke="currentColor"/><path d="M9 10V8a3 3 0 016 0v2" fill="none" stroke="currentColor"/></svg>
@@ -133,12 +133,12 @@ export default function Login() {
             </div>
             {isLogin && (
               <>
-                <div className="flex items-center justify-center gap-4 mt-4">
-                  <label className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center justify-center gap-6 mt-6">
+                  <label className="flex items-center gap-2 text-sm font-display" style={{ color: '#000' }}>
                     <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                     Remember me
                   </label>
-                  <button type="button" className="text-sm text-primary-600 hover:text-primary-700 font-medium">Forgot password?</button>
+                  <button type="button" className="text-sm font-display" style={{ color: '#000' }}>Forgot password?</button>
                 </div>
               </>
             )}
@@ -147,7 +147,7 @@ export default function Login() {
                 <p className="text-sm text-red-600 text-center">{error}</p>
               </div>
             )}
-            <div className="flex flex-col items-center gap-4 mt-6 mb-2">
+            <div className="flex flex-col items-center gap-6 mt-8 mb-4">
               <button
                 type="submit"
                 disabled={loading}
@@ -155,11 +155,11 @@ export default function Login() {
               >
                 {loading ? 'Processing...' : (isLogin ? 'Login' : 'Create Account')}
               </button>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm font-display" style={{ color: '#000' }}>
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
                 <button
                   type="button"
-                  className="text-primary-600 hover:text-primary-700 font-semibold"
+                  className="font-semibold" style={{ color: '#000' }}
                   onClick={() => {
                     setIsLogin(!isLogin)
                     setError('')

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { marketService, strategyService } from '../services/supabase'
 import MarketDataPanel from '../components/MarketDataPanel'
+import IntradayReportBar from '../components/IntradayReportBar'
 import StrategySignals from '../components/StrategySignals'
 import QuickOrderPanel from '../components/QuickOrderPanel'
 import PriceChart from '../components/PriceChart'
@@ -124,6 +125,9 @@ export default function Dashboard() {
             Monitor real-time market data, strategy signals, and execute trades
           </p>
         </div>
+
+        {/* Intraday Report Section */}
+        <IntradayReportBar />
 
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
