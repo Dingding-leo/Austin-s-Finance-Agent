@@ -159,23 +159,24 @@ if (!(await existsForWindow('ETH-USDT'))) {
   await insertReport('ETH-USDT', parsedContent.eth_report || 'No report generated', ethBias.bias, ethBias.confidence)
 }
 
-const evalOne = async (symbol, chart) => {
-  const q = await fetch(`${SUPA_URL}/rest/v1/intraday_reports?symbol=eq.${encodeURIComponent(symbol)}&evaluated_at=is.null&order=generated_at.desc&limit=1`, {
+const evalAll = async (symbol, chart) => {
+  const q = await fetch(`${SUPA_URL}/rest/v1/intraday_reports?symbol=eq.${encodeURIComponent(symbol)}&evaluated_at=is.null&order=generated_at.asc`, {
     headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` }
   })
   const rows = await q.json()
-  const row = rows?.[0]
-  if (!row) return
+  if (!Array.isArray(rows) || rows.length === 0) return
   const arr = chart.data?.prices || []
-  const startPx = nearestPrice(arr, new Date(row.window_start).getTime())
-  const endPx = nearestPrice(arr, new Date(row.window_end).getTime())
-  if (!startPx || !endPx) return
-  const pct = ((endPx - startPx) / startPx) * 100
-  const realized = pct > 0.2 ? 'Bullish' : pct < -0.2 ? 'Bearish' : 'Sideways'
-  const correct = (row.trend_prediction || '').toLowerCase() === realized.toLowerCase()
-  await updateEval(row.id, realized, correct)
+  for (const row of rows) {
+    const startPx = nearestPrice(arr, new Date(row.window_start).getTime())
+    const endPx = nearestPrice(arr, new Date(row.window_end).getTime())
+    if (!startPx || !endPx) continue
+    const pct = ((endPx - startPx) / startPx) * 100
+    const realized = pct > 0.2 ? 'Bullish' : pct < -0.2 ? 'Bearish' : 'Sideways'
+    const correct = (row.trend_prediction || '').toLowerCase() === realized.toLowerCase()
+    await updateEval(row.id, realized, correct)
+  }
 }
 
-await evalOne('BTC-USDT', btcChart)
-await evalOne('ETH-USDT', ethChart)
+await evalAll('BTC-USDT', btcChart)
+await evalAll('ETH-USDT', ethChart)
 console.log('Done')
