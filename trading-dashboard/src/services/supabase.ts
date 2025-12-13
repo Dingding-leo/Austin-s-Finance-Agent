@@ -309,9 +309,21 @@ export const intradayReportService = {
       .select('*')
       .in('symbol', symbols)
       .order('generated_at', { ascending: false })
-      .limit(2)
+      .limit(symbols.length * 3)
     if (error) throw error
     return data || []
+  },
+  async getLatestForSymbol(symbol: string) {
+    if (!supabase) return null
+    const { data, error } = await supabase
+      .from('intraday_reports')
+      .select('*')
+      .eq('symbol', symbol)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error) throw error
+    return data
   },
   async getHistory(symbol: string, limit = 20) {
     if (!supabase) return []

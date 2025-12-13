@@ -116,8 +116,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-900">
-      <div className="trading-dashboard">
+    <div className="min-h-screen bg-dark-900 overflow-x-hidden">
+      <div className="trading-dashboard container max-w-screen-xl mx-auto px-4">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-white mb-2">Live Trading Dashboard</h1>

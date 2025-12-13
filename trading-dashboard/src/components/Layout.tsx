@@ -34,7 +34,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-dark-900 overflow-x-hidden">
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? '' : 'hidden'}`}>
         <div className="fixed inset-0 bg-dark-900/80" onClick={() => setSidebarOpen(false)} />

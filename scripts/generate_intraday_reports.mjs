@@ -40,7 +40,20 @@ const snapshot = await coingeckoSimple()
 const btcChart = await coingeckoChart('bitcoin')
 const ethChart = await coingeckoChart('ethereum')
 
-const systemPrompt = `You are a BTC & ETH market research assistant focused on crypto macro, market structure, liquidity/flows, and news catalysts. You produce a real-time, source-cited report for Bitcoin (BTC) and Ethereum (ETH) only. Provide general information only — not financial advice. Follow the provided REQUIRED REPORT TEMPLATE exactly. Include Directional Bias for Next 6–12 hours and Next 24 hours with confidence and flipping conditions. Use session-aware notes and calendar context. Use the live data block I provide and include citations. At the end, output a compact JSON array named report_summary with objects: { asset: 'BTC'|'ETH', horizon_1h_bias: 'Bullish'|'Bearish'|'Sideways', confidence_1h: number } suitable for programmatic use. If you cannot confirm a data point, state so.`
+const systemPrompt = `You are a BTC & ETH market research assistant. Produce a real-time, source-cited report for Bitcoin (BTC) and Ethereum (ETH).
+Follow these rules:
+1. Provide separate, detailed analysis for BTC and ETH.
+2. For each asset, include Directional Bias (1h & 24h), Confidence, Key Levels, and Flow/Liquidity notes.
+3. Output the result strictly as a JSON object with this structure:
+{
+  "btc_report": "Full markdown text for Bitcoin report...",
+  "eth_report": "Full markdown text for Ethereum report...",
+  "summary": [
+    { "asset": "BTC", "horizon_1h_bias": "Bullish"|"Bearish"|"Sideways", "confidence_1h": number },
+    { "asset": "ETH", "horizon_1h_bias": "Bullish"|"Bearish"|"Sideways", "confidence_1h": number }
+  ]
+}
+4. Do not output any markdown code blocks (like \`\`\`json), just the raw JSON string.`
 
 const userPrompt = JSON.stringify({
   now: now.toISOString(),
@@ -49,7 +62,7 @@ const userPrompt = JSON.stringify({
   live_snapshot: snapshot,
   btc_chart_source: btcChart.source,
   eth_chart_source: ethChart.source,
-  notes: 'Generate the full report per template titled “BTC/ETH Market Report — (UTC timestamp)”.'
+  notes: 'Generate the intraday report now.'
 })
 
 const dsReq = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -64,18 +77,25 @@ const dsReq = await fetch('https://api.deepseek.com/v1/chat/completions', {
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
     ],
-    temperature: 0.3
+    temperature: 0.3,
+    response_format: { type: 'json_object' }
   })
 })
 const dsJson = await dsReq.json()
-const text = dsJson?.choices?.[0]?.message?.content || ''
+const contentRaw = dsJson?.choices?.[0]?.message?.content || '{}'
 
-const summaryMatch = text.match(/report_summary\s*[:=]?\s*([\s\S]*?)(\[.*\])/)
-let summary = []
+let parsedContent = { btc_report: '', eth_report: '', summary: [] }
 try {
-  const jsonBlock = text.match(/\[\s*{[\s\S]*}\s*\]/)?.[0]
-  summary = jsonBlock ? JSON.parse(jsonBlock) : []
-} catch {}
+  // cleanup potential markdown wrappers if the model ignores the instruction
+  const cleanJson = contentRaw.replace(/```json\n?|\n?```/g, '')
+  parsedContent = JSON.parse(cleanJson)
+} catch (e) {
+  console.error('Failed to parse JSON response:', e)
+  parsedContent.btc_report = contentRaw // Fallback
+  parsedContent.eth_report = contentRaw // Fallback
+}
+
+const summary = parsedContent.summary || []
 
 const getBias = (asset) => {
   const s = summary.find(x => (x.asset || '').toUpperCase() === asset)
@@ -125,8 +145,8 @@ const updateEval = async (id, realized, correct) => {
 
 const btcBias = getBias('BTC')
 const ethBias = getBias('ETH')
-await insertReport('BTC-USDT', text, btcBias.bias, btcBias.confidence)
-await insertReport('ETH-USDT', text, ethBias.bias, ethBias.confidence)
+await insertReport('BTC-USDT', parsedContent.btc_report || 'No report generated', btcBias.bias, btcBias.confidence)
+await insertReport('ETH-USDT', parsedContent.eth_report || 'No report generated', ethBias.bias, ethBias.confidence)
 
 const evalOne = async (symbol, chart) => {
   const q = await fetch(`${SUPA_URL}/rest/v1/intraday_reports?symbol=eq.${encodeURIComponent(symbol)}&evaluated_at=is.null&order=generated_at.desc&limit=1`, {
