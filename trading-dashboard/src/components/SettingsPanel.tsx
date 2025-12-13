@@ -91,6 +91,15 @@ export default function SettingsPanel() {
       await okxCredentialsService.saveEncrypted(user.id, bundle)
       setStatus('Saved to server (encrypted per-user)')
       setApiKey(''); setSecretKey(''); setPassphrase('')
+      try {
+        if (rememberForDashboard) {
+          localStorage.setItem('okx_master', masterPassword)
+          localStorage.setItem('okx_master_remember', '1')
+        } else {
+          localStorage.removeItem('okx_master')
+          localStorage.setItem('okx_master_remember', '0')
+        }
+      } catch {}
     } catch {
       setStatus('Server save failed')
     }

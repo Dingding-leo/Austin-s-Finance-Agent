@@ -22,9 +22,7 @@ export default function Dashboard() {
 
   const [accountValue, setAccountValue] = useState<number | null>(null)
   const [accountErr, setAccountErr] = useState<string>('')
-  const [refreshMs, setRefreshMs] = useState<number>(() => {
-    try { return Number(localStorage.getItem('account_value_refresh_ms') || '60000') } catch { return 60000 }
-  })
+  const [promptOpen, setPromptOpen] = useState<boolean>(false)
 
   useEffect(() => {
     const seedSignals: StrategySignal[] = [
@@ -72,22 +70,39 @@ export default function Dashboard() {
     const run = async () => {
       try {
         const mpw = localStorage.getItem('okx_master') || ''
-        if (!mpw || !user) return
+        if (!mpw) { setAccountErr('Master password not set in Settings'); return }
+        if (!user) { setAccountErr('Not logged in'); return }
         // @ts-ignore
-        const { supabase } = await import('../services/supabase')
-        if (!supabase) return
-        const { data, error } = await supabase.functions.invoke('account-value', { body: { masterPassword: mpw }})
-        if (error) throw error
-        setAccountValue(Number(data?.totalEq || 0))
+        const { supabase, supabaseUrl } = await import('../services/supabase')
+        if (!supabase) { setAccountErr('Supabase client not configured'); return }
+        const session = await supabase.auth.getSession()
+        const token = session?.data?.session?.access_token || ''
+        if (!token) { setAccountErr('No session token'); return }
+        const invoke = await supabase.functions.invoke('account-value', { body: { masterPassword: mpw } })
+        if (invoke.error || (invoke.data && invoke.data.ok === false)) {
+          const res = await fetch(`${supabaseUrl}/functions/v1/account-value`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ masterPassword: mpw })
+          })
+          const json = await res.json().catch(() => ({}))
+          if (!res.ok || json?.ok === false) throw new Error(String(json?.error || json?.data || res.statusText || 'Function error'))
+          setAccountValue(Number(json?.totalEq || 0))
+        } else {
+          setAccountValue(Number(invoke.data?.totalEq || 0))
+        }
         setAccountErr('')
       } catch (e: any) {
         setAccountErr(e?.message || 'Failed to fetch account value')
       }
     }
     run()
-    timer = setInterval(run, Math.max(15000, refreshMs))
+    timer = setInterval(run, 15000)
     return () => timer && clearInterval(timer)
-  }, [user, refreshMs])
+  }, [user])
 
   const toggleStrategyPanel = () => {
     const next = !strategyCollapsed
@@ -116,12 +131,7 @@ export default function Dashboard() {
             Monitor real-time market data, strategy signals, and execute trades
           </p>
           <div className="mt-2 flex items-center gap-3">
-            <span className="text-sm text-white">Account Value: {accountValue !== null ? `$${accountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDT` : (accountErr ? '—' : 'Loading...')}</span>
-            <div className="flex items-center gap-1">
-              <label className="text-xs text-dark-400">Refresh</label>
-              <input type="number" value={refreshMs} onChange={(e) => { const v = Number(e.target.value || 60000); setRefreshMs(v); try { localStorage.setItem('account_value_refresh_ms', String(v)) } catch {} }} className="w-20 input-trading text-xs" />
-              <span className="text-xs text-dark-400">ms</span>
-            </div>
+            <span className="text-sm text-white">Account Value: {accountValue !== null ? `$${accountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDT` : (accountErr ? `Error: ${accountErr}` : 'Loading...')}</span>
           </div>
         </div>
 
@@ -141,6 +151,12 @@ export default function Dashboard() {
             >
               {strategyCollapsed ? 'Expand' : 'Collapse'}
             </button>
+            <button
+              onClick={() => setPromptOpen(p => !p)}
+              className="ml-2 px-3 py-1 text-xs font-medium rounded bg-primary-600 text-white hover:bg-primary-700"
+            >
+              {promptOpen ? 'Hide Prompt' : 'Edit Prompt'}
+            </button>
           </div>
           {!strategyCollapsed && (
             <StrategySignals 
@@ -158,13 +174,17 @@ export default function Dashboard() {
               onSignalSelect={(signal) => console.log('Signal selected:', signal)}
             />
           )}
+          {promptOpen && (
+            <div className="p-4">
+              <PromptEditor strategyId="seed-strategy-1" />
+            </div>
+          )}
         </div>
 
         {/* Secure Settings Panel */}
         <SettingsPanel />
 
-        {/* Prompt Editor */}
-        <PromptEditor strategyId="seed-strategy-1" />
+        {/* Prompt Editor moved into Strategy Signals panel */}
       </div>
     </div>
   )

@@ -6,18 +6,21 @@ import {
   ArrowDownIcon, 
   PauseIcon,
   ClockIcon,
-  ChartBarIcon
 } from '@heroicons/react/24/solid'
 
 interface StrategySignalsProps {
   signals: StrategySignal[]
   strategies: Strategy[]
+  activeSymbols?: string[]
+  onAssetsChange?: (symbols: string[]) => void
   onSignalSelect: (signal: StrategySignal) => void
 }
 
-export default function StrategySignals({ signals, strategies, onSignalSelect }: StrategySignalsProps) {
+export default function StrategySignals({ signals, strategies, activeSymbols = ['BTC-USDT','ETH-USDT'], onAssetsChange, onSignalSelect }: StrategySignalsProps) {
   const [localSignals, setLocalSignals] = useState<StrategySignal[]>(signals)
   useEffect(() => { setLocalSignals(signals) }, [signals])
+  const [assets, setAssets] = useState<string[]>(activeSymbols)
+  useEffect(() => { setAssets(activeSymbols) }, [activeSymbols])
   const getStrategyName = (strategyId: string) => {
     const strategy = strategies.find(s => s.id === strategyId)
     return strategy?.name || 'Unknown Strategy'
@@ -44,7 +47,7 @@ export default function StrategySignals({ signals, strategies, onSignalSelect }:
       case 'HOLD':
         return <PauseIcon className="h-5 w-5 text-warning-400" />
       default:
-        return <ChartBarIcon className="h-5 w-5 text-dark-400" />
+        return null
     }
   }
 
@@ -61,21 +64,29 @@ export default function StrategySignals({ signals, strategies, onSignalSelect }:
     }
   }
 
-  if (localSignals.length === 0) {
-    return (
-      <div className="p-6 text-center">
-        <ChartBarIcon className="h-12 w-12 text-dark-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-dark-300 mb-2">No Active Signals</h3>
-        <p className="text-dark-500 text-sm">
-          Strategy signals will appear here when your active strategies generate trading opportunities.
-        </p>
-      </div>
-    )
-  }
+  const filtered = localSignals.filter(s => assets.includes(s.symbol))
+  // Always render toggles; show empty message when no filtered signals
 
   return (
     <div className="p-4 space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
-      {localSignals.map((signal, idx) => (
+      {/* Asset toggles */}
+      <div className="flex items-center gap-2 mb-2">
+        {['BTC-USDT','ETH-USDT'].map(sym => (
+          <button key={sym} onClick={() => {
+            const next = assets.includes(sym) ? assets.filter(a => a !== sym) : [...assets, sym]
+            setAssets(next)
+            onAssetsChange && onAssetsChange(next)
+          }} className={`px-2 py-1 rounded text-xs ${assets.includes(sym) ? 'bg-success-700 text-white' : 'bg-dark-700 text-dark-200'}`}>
+            {assets.includes(sym) ? 'On ' : 'Off '}{sym.replace('-USDT','')}
+          </button>
+        ))}
+      </div>
+      {filtered.length === 0 && (
+        <div className="p-4 text-center">
+          <h3 className="text-sm font-medium text-dark-300">No signals for selected assets</h3>
+        </div>
+      )}
+      {filtered.map((signal, idx) => (
         <div
           key={signal.id}
           onClick={() => onSignalSelect(signal)}

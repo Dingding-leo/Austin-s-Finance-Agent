@@ -1,18 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
 import type { MarketPrice, Strategy, Order, Position, TradingSession } from '../types'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kmdfvofhzkzajnjwytpf.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImttZGZ2b2Zoemt6YWpuand5dHBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NDMyMzYsImV4cCI6MjA4MTExOTIzNn0.quRVR8r_de3LSTC4jtMe7tjtvpSoviFrOYiac6Gyo0k'
 const isValidUrl = (u: string) => /^https?:\/\//.test(u)
-const isPlaceholder = (v: string) => /your_supabase_/i.test(v)
 
-if (!supabaseUrl || !supabaseAnonKey || !isValidUrl(supabaseUrl) || isPlaceholder(supabaseUrl) || isPlaceholder(supabaseAnonKey)) {
-  console.warn('Supabase not configured or invalid. Falling back to mock services.')
-}
-
-export const supabase = (supabaseUrl && supabaseAnonKey && isValidUrl(supabaseUrl) && !isPlaceholder(supabaseUrl) && !isPlaceholder(supabaseAnonKey))
+export const supabase = (supabaseUrl && supabaseAnonKey && isValidUrl(supabaseUrl))
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null
+
+export { supabaseUrl }
 
 // Authentication service
 export const authService = {
@@ -298,6 +295,90 @@ export const strategyService = {
     
     if (error) throw error
     return data
+  },
+}
+
+export const strategyAssetsService = {
+  async getAssets(userId: string, strategyId: string) {
+    if (!supabase) {
+      const raw = localStorage.getItem(`assets_${userId}_${strategyId}`)
+      return raw ? JSON.parse(raw) : []
+    }
+    const { data, error } = await supabase
+      .from('strategy_assets')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('strategy_id', strategyId)
+    if (error) throw error
+    return data || []
+  },
+  async setAsset(userId: string, strategyId: string, symbol: string, active: boolean) {
+    if (!supabase) {
+      const list = await this.getAssets(userId, strategyId)
+      const idx = list.findIndex((a: any) => a.symbol === symbol)
+      if (idx === -1) list.push({ symbol, active })
+      else list[idx].active = active
+      localStorage.setItem(`assets_${userId}_${strategyId}`, JSON.stringify(list))
+      return { ok: true }
+    }
+    const { error } = await supabase
+      .from('strategy_assets')
+      .upsert({ user_id: userId, strategy_id: strategyId, symbol, active, updated_at: new Date().toISOString() })
+    if (error) throw error
+    return { ok: true }
+  },
+}
+
+export const promptService = {
+  async listPrompts(userId: string, strategyId: string) {
+    if (!supabase) {
+      const raw = localStorage.getItem(`prompts_${userId}_${strategyId}`)
+      return raw ? JSON.parse(raw) : []
+    }
+    const { data, error } = await supabase
+      .from('strategy_prompts')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('strategy_id', strategyId)
+      .order('version', { ascending: false })
+    if (error) throw error
+    return data || []
+  },
+  async savePrompt(userId: string, strategyId: string, content: string) {
+    if (!supabase) {
+      const list = await this.listPrompts(userId, strategyId)
+      const version = (list[0]?.version || 0) + 1
+      const item = { id: Date.now().toString(), user_id: userId, strategy_id: strategyId, version, content, created_at: new Date().toISOString() }
+      const next = [item, ...list]
+      localStorage.setItem(`prompts_${userId}_${strategyId}`, JSON.stringify(next))
+      return item
+    }
+    const latest = await this.listPrompts(userId, strategyId)
+    const version = (latest[0]?.version || 0) + 1
+    const { data, error } = await supabase
+      .from('strategy_prompts')
+      .insert({ user_id: userId, strategy_id: strategyId, version, content })
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  },
+}
+
+export const strategyDecisionService = {
+  async listDecisions(userId: string, limit = 50) {
+    if (!supabase) {
+      const raw = localStorage.getItem(`decisions_${userId}`)
+      return raw ? JSON.parse(raw) : []
+    }
+    const { data, error } = await supabase
+      .from('strategy_decisions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+    if (error) throw error
+    return data || []
   },
 }
 

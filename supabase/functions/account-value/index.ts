@@ -1,6 +1,12 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4"
-import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts"
+
+const toBase64 = (u8: Uint8Array) => {
+  let s = ""
+  for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i])
+  // @ts-ignore
+  return btoa(s)
+}
 
 async function decryptBundle(masterPassword: string, bundle: { salt: number[]; iv: number[]; ct: number[] }) {
   const enc = new TextEncoder()
@@ -18,13 +24,14 @@ async function okxSign(secret: string, prehash: string) {
   const enc = new TextEncoder()
   const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
   const sig = await crypto.subtle.sign('HMAC', key, enc.encode(prehash))
-  return encodeBase64(new Uint8Array(sig))
+  return toBase64(new Uint8Array(sig))
 }
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Credentials': 'true',
 }
 
 export default async function handler(req: Request): Promise<Response> {
