@@ -65,25 +65,33 @@ export default function Dashboard() {
     })()
   }, [])
 
+  const [statusStep, setStatusStep] = useState<string>('')
+
   useEffect(() => {
     let timer: any
     const run = async () => {
       console.log('Account fetch run started')
+      setStatusStep('Starting...')
       try {
         const mpw = localStorage.getItem('okx_master') || ''
         if (!mpw) { 
           console.log('No master password')
-          setAccountErr('Master password not set in Settings'); return 
+          setAccountErr('Master password not set in Settings')
+          setStatusStep('Missing Master Password')
+          return 
         }
         if (!user) { 
           console.log('No user')
-          setAccountErr('Not logged in'); return 
+          setAccountErr('Not logged in')
+          setStatusStep('Not logged in')
+          return 
         }
         // @ts-ignore
         const { supabase, supabaseUrl } = await import('../services/supabase')
         if (!supabase) { setAccountErr('Supabase client not configured'); return }
         
         console.log('Fetching account value...')
+        setStatusStep('Getting Session...')
         const session = await supabase.auth.getSession()
         const token = session?.data?.session?.access_token || ''
         if (!token) { setAccountErr('No session token'); return }
@@ -93,6 +101,7 @@ export default function Dashboard() {
         const timeout = setTimeout(() => controller.abort(), 10000) // 10s frontend timeout
         
         try {
+          setStatusStep('Sending Request...')
           const res = await fetch(`${supabaseUrl}/functions/v1/account-value`, {
               method: 'POST',
               headers: {
@@ -105,6 +114,7 @@ export default function Dashboard() {
           })
           clearTimeout(timeout)
           
+          setStatusStep('Parsing Response...')
           const json = await res.json().catch((e) => {
               console.error('JSON parse error:', e)
               return { error: 'Invalid JSON response' }
@@ -117,6 +127,7 @@ export default function Dashboard() {
           
           setAccountValue(Number(json?.totalEq || 0))
           setAccountErr('')
+          setStatusStep('Done')
         } catch (fetchErr: any) {
            clearTimeout(timeout)
            if (fetchErr.name === 'AbortError') {
@@ -129,6 +140,7 @@ export default function Dashboard() {
         // Handle weird non-Error objects
         const msg = e?.message || (typeof e === 'string' ? e : JSON.stringify(e))
         setAccountErr(msg || 'Failed to fetch account value')
+        setStatusStep('Error')
       }
     }
     run()
@@ -163,7 +175,7 @@ export default function Dashboard() {
             Monitor real-time market data, strategy signals, and execute trades
           </p>
           <div className="mt-2 flex items-center gap-3">
-            <span className="text-sm text-white">Account Value: {accountValue !== null ? `$${accountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDT` : (accountErr ? `Error: ${accountErr}` : 'Loading...')}</span>
+            <span className="text-sm text-white">Account Value: {accountValue !== null ? `$${accountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDT` : (accountErr ? `Error: ${accountErr}` : `Loading... (${statusStep})`)}</span>
           </div>
         </div>
 
