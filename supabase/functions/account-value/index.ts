@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4"
-import { encode as b64 } from "https://deno.land/std@0.224.0/encoding/base64.ts"
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts"
 
 async function decryptBundle(masterPassword: string, bundle: { salt: number[]; iv: number[]; ct: number[] }) {
   const enc = new TextEncoder()
@@ -18,7 +18,7 @@ async function okxSign(secret: string, prehash: string) {
   const enc = new TextEncoder()
   const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
   const sig = await crypto.subtle.sign('HMAC', key, enc.encode(prehash))
-  return b64(sig)
+  return encodeBase64(new Uint8Array(sig))
 }
 
 const cors = {
