@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 */4 * * *"
   workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'scripts/generate_intraday_reports.mjs'
+      - '.github/workflows/intraday-reports.yml'
 
 jobs:
   generate-and-evaluate:

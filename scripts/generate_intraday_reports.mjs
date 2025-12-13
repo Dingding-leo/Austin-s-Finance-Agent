@@ -128,6 +128,13 @@ const insertReport = async (symbol, content, pred, conf) => {
   return j?.[0]
 }
 
+const existsForWindow = async (symbol) => {
+  const url = `${SUPA_URL}/rest/v1/intraday_reports?symbol=eq.${encodeURIComponent(symbol)}&window_start=eq.${encodeURIComponent(windowStart.toISOString())}&select=id`
+  const r = await fetch(url, { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } })
+  const j = await r.json()
+  return Array.isArray(j) && j.length > 0
+}
+
 const updateEval = async (id, realized, correct) => {
   const r = await fetch(`${SUPA_URL}/rest/v1/intraday_reports?id=eq.${id}`, {
     method: 'PATCH',
@@ -145,8 +152,12 @@ const updateEval = async (id, realized, correct) => {
 
 const btcBias = getBias('BTC')
 const ethBias = getBias('ETH')
-await insertReport('BTC-USDT', parsedContent.btc_report || 'No report generated', btcBias.bias, btcBias.confidence)
-await insertReport('ETH-USDT', parsedContent.eth_report || 'No report generated', ethBias.bias, ethBias.confidence)
+if (!(await existsForWindow('BTC-USDT'))) {
+  await insertReport('BTC-USDT', parsedContent.btc_report || 'No report generated', btcBias.bias, btcBias.confidence)
+}
+if (!(await existsForWindow('ETH-USDT'))) {
+  await insertReport('ETH-USDT', parsedContent.eth_report || 'No report generated', ethBias.bias, ethBias.confidence)
+}
 
 const evalOne = async (symbol, chart) => {
   const q = await fetch(`${SUPA_URL}/rest/v1/intraday_reports?symbol=eq.${encodeURIComponent(symbol)}&evaluated_at=is.null&order=generated_at.desc&limit=1`, {
