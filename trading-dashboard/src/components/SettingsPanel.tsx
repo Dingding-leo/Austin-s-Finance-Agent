@@ -20,7 +20,7 @@ async function encryptPayload(passphrase: string, payload: Record<string, string
   return { salt: Array.from(salt), iv: Array.from(iv), ct: Array.from(new Uint8Array(ciphertext)) }
 }
 
-async function decryptPayload(passphrase: string, bundle: { salt: number[]; iv: number[]; ct: number[] }) {
+export async function decryptPayload(passphrase: string, bundle: { salt: number[]; iv: number[]; ct: number[] }) {
   const salt = new Uint8Array(bundle.salt)
   const iv = new Uint8Array(bundle.iv)
   const key = await deriveKey(passphrase, salt)

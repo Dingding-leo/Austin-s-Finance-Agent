@@ -5,7 +5,7 @@ import StrategySignals from '../components/StrategySignals'
 import type { StrategySignal } from '../types'
 import { strategyAssetsService } from '../services/supabase'
 // Temporarily remove other sections; will add back incrementally
-import SettingsPanel from '../components/SettingsPanel'
+import SettingsPanel, { decryptPayload } from '../components/SettingsPanel'
 import PromptEditor from '../components/PromptEditor'
  
 
@@ -67,6 +67,35 @@ export default function Dashboard() {
 
   const [statusStep, setStatusStep] = useState<string>('')
 
+  // Client-side fetcher for when users strictly need IP whitelisting
+  // Note: This requires a CORS proxy or browser extension to work with OKX API
+  const clientSideFetch = async (creds: any) => {
+    const host = 'https://www.okx.com'
+    const path = '/api/v5/account/balance'
+    const method = 'GET'
+    const timestamp = new Date().toISOString()
+    const prehash = `${timestamp}${method}${path}`
+    
+    // Sign locally
+    const enc = new TextEncoder()
+    const key = await crypto.subtle.importKey('raw', enc.encode(creds.secretKey), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+    const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(prehash))
+    // @ts-ignore
+    const signature = btoa(String.fromCharCode(...new Uint8Array(sigBuf)))
+
+    // Attempt direct fetch (will likely fail CORS unless proxied)
+    const res = await fetch(`${host}${path}`, {
+      method,
+      headers: {
+        'OK-ACCESS-KEY': creds.apiKey,
+        'OK-ACCESS-SIGN': signature,
+        'OK-ACCESS-TIMESTAMP': timestamp,
+        'OK-ACCESS-PASSPHRASE': creds.passphrase,
+      }
+    })
+    return res.json()
+  }
+
   useEffect(() => {
     let timer: any
     const run = async () => {
@@ -101,6 +130,10 @@ export default function Dashboard() {
         const timeout = setTimeout(() => controller.abort(), 30000) // 30s frontend timeout
         
         try {
+          // Attempt client-side fetch first if user requested it (via query param or setting)
+          // For now, we try server-side first, but fall back to client-side logic if timeout occurs
+          // NOTE: Client-side fetch WILL fail CORS unless user has a proxy extension
+          
           setStatusStep('Sending Request...')
           const res = await fetch(`${supabaseUrl}/functions/v1/account-value`, {
               method: 'POST',
@@ -130,8 +163,27 @@ export default function Dashboard() {
           setStatusStep('Done')
         } catch (fetchErr: any) {
            clearTimeout(timeout)
-           if (fetchErr.name === 'AbortError') {
-             throw new Error('Request timed out (frontend)')
+           if (fetchErr.name === 'AbortError' || fetchErr.message.includes('timed out')) {
+             // Fallback: Try client-side fetch (requires IP whitelist but fails CORS without proxy)
+             setStatusStep('Server timed out. Trying client-side...')
+             try {
+               const { okxCredentialsService } = await import('../services/supabase')
+               const bundle = await okxCredentialsService.loadEncrypted(user.id)
+               if (bundle) {
+                 const creds = await decryptPayload(mpw, bundle)
+                 const clientData = await clientSideFetch(creds)
+                 if (clientData?.data?.[0]?.totalEq) {
+                   setAccountValue(Number(clientData.data[0].totalEq))
+                   setAccountErr('')
+                   setStatusStep('Done (Client-side)')
+                   return
+                 }
+               }
+             } catch (clientErr) {
+               console.error('Client-side fetch failed:', clientErr)
+             }
+             
+             throw new Error('Request timed out. Server blocked by IP whitelist? Client blocked by CORS? Check console.')
            }
            throw fetchErr
         }
