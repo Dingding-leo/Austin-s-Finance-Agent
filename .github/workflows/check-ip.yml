@@ -1,0 +1,14 @@
+name: Check Runner IP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-ip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check IPv4
+        run: curl -s https://api.ipify.org?format=json
+
+      - name: Check IPv6
+        run: curl -s https://api64.ipify.org?format=json

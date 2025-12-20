@@ -1,7 +1,0 @@
-openai
-ccxt
-pandas
-duckduckgo-search
-python-dotenv
-colorama
-requests

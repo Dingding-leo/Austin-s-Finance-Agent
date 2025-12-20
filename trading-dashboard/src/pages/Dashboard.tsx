@@ -116,7 +116,7 @@ export default function Dashboard() {
           return 
         }
         // @ts-ignore
-        const { supabase, supabaseUrl } = await import('../services/supabase')
+        const { supabase, supabaseUrl, accountBalanceService } = await import('../services/supabase')
         if (!supabase) { setAccountErr('Supabase client not configured'); return }
         
         console.log('Fetching account value...')
@@ -125,7 +125,23 @@ export default function Dashboard() {
         const token = session?.data?.session?.access_token || ''
         if (!token) { setAccountErr('No session token'); return }
 
-        // Try direct fetch first as it's more transparent for debugging
+        // Subscribe to real-time updates from local executor
+        const balanceSub = accountBalanceService.subscribeToBalance(user.id, (val) => {
+             setAccountValue(val)
+             setAccountErr('')
+             setStatusStep('Live (Local)')
+        })
+
+        // Also fetch latest immediately
+        const latest = await accountBalanceService.getLatestBalance(user.id)
+        if (latest) {
+             setAccountValue(latest.total_equity)
+             setAccountErr('')
+             setStatusStep('Synced (Local)')
+             return
+        }
+
+        // Fallback: Try direct fetch first as it's more transparent for debugging
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), 30000) // 30s frontend timeout
         
@@ -228,6 +244,9 @@ export default function Dashboard() {
           </p>
           <div className="mt-2 flex items-center gap-3">
             <span className="text-sm text-white">Account Value: {accountValue !== null ? `$${accountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDT` : (accountErr ? `Error: ${accountErr}` : `Loading... (${statusStep})`)}</span>
+            <div className="text-xs text-dark-400 bg-dark-800 px-2 py-1 rounded border border-dark-700">
+              <span className="text-primary-400 font-medium">Local Executor:</span> Run <code>python src/execution/local_executor.py</code> to execute trades from your device.
+            </div>
           </div>
         </div>
 
