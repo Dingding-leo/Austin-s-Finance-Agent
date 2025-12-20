@@ -44,132 +44,110 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen hero-wrap relative">
-      <div className="absolute top-32 left-1/2 -translate-x-1/2 flex items-center gap-4 brand-glow">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-400">
-          <path d="M12 2c5.5 0 10 4.5 10 10 0 5.5-4.5 10-10 10S2 17.5 2 12 6.5 2 12 2z" stroke="currentColor" strokeWidth="1.2" />
-          <path d="M8 10c1.5-3 6.5-3 8 0M8 14c1.5 3 6.5 3 8 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          <path d="M12 5v14" stroke="currentColor" strokeWidth="1.2" />
-        </svg>
-        <span className="font-display text-white text-5xl md:text-6xl tracking-wide">AI TRADING</span>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      {/* Background Glow */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 rounded-full blur-[120px]" />
       </div>
 
-      <div className="absolute right-12 top-24 hidden lg:block opacity-80 brand-glow">
-        <svg width="420" height="260" viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">
-          <g fill="none" stroke="#60a5fa" strokeWidth="1.2" opacity="0.85">
-            <path d="M120 60c30-40 120-40 150 0M120 180c30 40 120 40 150 0" />
-            <path d="M195 60v120" />
-          </g>
-          <g fill="#3b82f6" opacity="0.8">
-            <rect x="320" y="120" width="14" height="48" rx="3" />
-            <rect x="340" y="90" width="14" height="78" rx="3" />
-            <rect x="360" y="130" width="14" height="52" rx="3" />
-            <rect x="380" y="100" width="14" height="82" rx="3" />
-          </g>
-        </svg>
-      </div>
+      <div className="relative w-full max-w-md">
+        {/* Brand Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 shadow-lg shadow-blue-500/20 mb-4">
+            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Finance<span className="text-blue-500">AI</span></h1>
+          <p className="text-slate-400 text-sm mt-1">Professional Trading Terminal</p>
+        </div>
 
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="login-card w-[78%] max-w-5xl p-8 bg-white shadow-xl border border-gray-200 rounded-2xl">
-          <h1 className="text-3xl md:text-4xl font-bold text-center mb-8 font-display tracking-wide" style={{ color: '#000' }}>{isLogin ? 'Login' : 'Create Account'}</h1>
-          <form className="space-y-6" onSubmit={handleSubmit}>
+        {/* Auth Card */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 backdrop-blur-sm">
+          <h2 className="text-xl font-semibold text-white mb-6 text-center">
+            {isLogin ? 'Welcome back' : 'Create account'}
+          </h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <label htmlFor="name" className="block text-sm mb-2 text-center" style={{ color: '#000' }}>Full Name</label>
-                <div className="flex justify-center">
-                  <div className="input-with-icon w-[78%]">
-                    <svg viewBox="0 0 24 24" className="text-gray-400"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="none" stroke="currentColor"/></svg>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      className="input-soft w-full rounded-2xl text-gray-900 bg-gray-50 border-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="Full Name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wide">Full Name</label>
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors placeholder:text-slate-600"
+                  placeholder="John Doe"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                />
               </div>
             )}
+
             <div>
-              <label htmlFor="email" className="block text-sm mb-2 text-center" style={{ color: '#000' }}>Email address</label>
-              <div className="flex justify-center">
-                <div className="input-with-icon w-[78%]">
-                  <svg viewBox="0 0 24 24" className="text-gray-400"><path d="M4 6h16v12H4z" fill="none" stroke="currentColor"/><path d="M4 6l8 6 8-6" fill="none" stroke="currentColor"/></svg>
-                  <input
-                    id="email"
-                    name="email"
-                    type="text"
-                    autoComplete="email"
-                    required
-                    className="input-soft w-full rounded-2xl text-gray-900 bg-gray-50 border-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Email address"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
+              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wide">Email</label>
+              <input
+                name="email"
+                type="email"
+                required
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors placeholder:text-slate-600"
+                placeholder="name@example.com"
+                value={formData.email}
+                onChange={handleInputChange}
+              />
             </div>
+
             <div>
-              <label htmlFor="password" className="block text-sm mb-2 text-center" style={{ color: '#000' }}>Password</label>
-              <div className="flex justify-center">
-                <div className="input-with-icon w-[78%]">
-                  <svg viewBox="0 0 24 24" className="text-gray-400"><path d="M6 10h12v8H6z" fill="none" stroke="currentColor"/><path d="M9 10V8a3 3 0 016 0v2" fill="none" stroke="currentColor"/></svg>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    className="input-soft w-full rounded-2xl text-gray-900 bg-gray-50 border-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
+              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wide">Password</label>
+              <input
+                name="password"
+                type="password"
+                required
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-colors placeholder:text-slate-600"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleInputChange}
+              />
             </div>
-            {isLogin && (
-              <>
-                <div className="flex items-center justify-center gap-6 mt-6">
-                  <label className="flex items-center gap-2 text-sm font-display" style={{ color: '#000' }}>
-                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-                    Remember me
-                  </label>
-                  <button type="button" className="text-sm font-display" style={{ color: '#000' }}>Forgot password?</button>
-                </div>
-              </>
-            )}
+
             {error && (
-              <div className="rounded-md bg-red-50 border border-red-200 p-3 mx-auto w-[78%]">
-                <p className="text-sm text-red-600 text-center">{error}</p>
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm text-center">
+                {error}
               </div>
             )}
-            <div className="flex flex-col items-center gap-6 mt-8 mb-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-[78%] rounded-full bg-primary-600 text-white py-3 text-base font-semibold hover:bg-primary-700 transition disabled:opacity-50 shadow-lg shadow-primary-500/30"
-              >
-                {loading ? 'Processing...' : (isLogin ? 'Login' : 'Create Account')}
-              </button>
-              <div className="text-sm font-display" style={{ color: '#000' }}>
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <button
-                  type="button"
-                  className="font-semibold" style={{ color: '#000' }}
-                  onClick={() => {
-                    setIsLogin(!isLogin)
-                    setError('')
-                  }}
-                >
-                  {isLogin ? 'Sign up' : 'Login'}
-                </button>
-              </div>
-            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-lg transition-all active:scale-[0.98] shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Processing...
+                </span>
+              ) : (isLogin ? 'Sign In' : 'Create Account')}
+            </button>
           </form>
+
+          <div className="mt-6 pt-6 border-t border-slate-800 text-center">
+            <p className="text-sm text-slate-400">
+              {isLogin ? "Don't have an account?" : "Already have an account?"}
+              <button
+                onClick={() => {
+                  setIsLogin(!isLogin)
+                  setError('')
+                }}
+                className="ml-2 text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              >
+                {isLogin ? 'Sign up' : 'Log in'}
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>

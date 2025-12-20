@@ -4,25 +4,45 @@ import IntradayReportBar from '../components/IntradayReportBar'
 import StrategySignals from '../components/StrategySignals'
 import type { StrategySignal } from '../types'
 import { strategyAssetsService } from '../services/supabase'
-// Temporarily remove other sections; will add back incrementally
 import SettingsPanel, { decryptPayload } from '../components/SettingsPanel'
 import PromptEditor from '../components/PromptEditor'
- 
+import { SignalIcon, Cog6ToothIcon, CommandLineIcon } from '@heroicons/react/24/outline'
 
 export default function Dashboard() {
   const [loading] = useState(false)
   const [signals, setSignals] = useState<StrategySignal[]>([])
   const [activeSymbols, setActiveSymbols] = useState<string[]>(['BTC-USDT','ETH-USDT'])
   const { user } = useAuth()
-  const [strategyCollapsed, setStrategyCollapsed] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('strategyPanelCollapsed') === '1'
-    } catch { return false }
-  })
-
+  
   const [accountValue, setAccountValue] = useState<number | null>(null)
   const [accountErr, setAccountErr] = useState<string>('')
-  const [promptOpen, setPromptOpen] = useState<boolean>(false)
+  const [statusStep, setStatusStep] = useState<string>('')
+
+  // Client-side fetcher for fallback
+  const clientSideFetch = async (creds: any) => {
+    const host = 'https://www.okx.com'
+    const path = '/api/v5/account/balance'
+    const method = 'GET'
+    const timestamp = new Date().toISOString()
+    const prehash = `${timestamp}${method}${path}`
+    
+    const enc = new TextEncoder()
+    const key = await crypto.subtle.importKey('raw', enc.encode(creds.secretKey), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+    const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(prehash))
+    // @ts-ignore
+    const signature = btoa(String.fromCharCode(...new Uint8Array(sigBuf)))
+
+    const res = await fetch(`${host}${path}`, {
+      method,
+      headers: {
+        'OK-ACCESS-KEY': creds.apiKey,
+        'OK-ACCESS-SIGN': signature,
+        'OK-ACCESS-TIMESTAMP': timestamp,
+        'OK-ACCESS-PASSPHRASE': creds.passphrase,
+      }
+    })
+    return res.json()
+  }
 
   useEffect(() => {
     const seedSignals: StrategySignal[] = [
@@ -65,68 +85,33 @@ export default function Dashboard() {
     })()
   }, [])
 
-  const [statusStep, setStatusStep] = useState<string>('')
-
-  // Client-side fetcher for when users strictly need IP whitelisting
-  // Note: This requires a CORS proxy or browser extension to work with OKX API
-  const clientSideFetch = async (creds: any) => {
-    const host = 'https://www.okx.com'
-    const path = '/api/v5/account/balance'
-    const method = 'GET'
-    const timestamp = new Date().toISOString()
-    const prehash = `${timestamp}${method}${path}`
-    
-    // Sign locally
-    const enc = new TextEncoder()
-    const key = await crypto.subtle.importKey('raw', enc.encode(creds.secretKey), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-    const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(prehash))
-    // @ts-ignore
-    const signature = btoa(String.fromCharCode(...new Uint8Array(sigBuf)))
-
-    // Attempt direct fetch (will likely fail CORS unless proxied)
-    const res = await fetch(`${host}${path}`, {
-      method,
-      headers: {
-        'OK-ACCESS-KEY': creds.apiKey,
-        'OK-ACCESS-SIGN': signature,
-        'OK-ACCESS-TIMESTAMP': timestamp,
-        'OK-ACCESS-PASSPHRASE': creds.passphrase,
-      }
-    })
-    return res.json()
-  }
-
   useEffect(() => {
     let timer: any
     const run = async () => {
-      console.log('Account fetch run started')
       setStatusStep('Starting...')
       try {
         const mpw = localStorage.getItem('okx_master') || ''
         if (!mpw) { 
-          console.log('No master password')
-          setAccountErr('Master password not set in Settings')
-          setStatusStep('Missing Master Password')
+          setAccountErr('Master password not set')
+          setStatusStep('Missing PW')
           return 
         }
         if (!user) { 
-          console.log('No user')
           setAccountErr('Not logged in')
-          setStatusStep('Not logged in')
+          setStatusStep('Guest')
           return 
         }
         // @ts-ignore
         const { supabase, supabaseUrl, accountBalanceService } = await import('../services/supabase')
-        if (!supabase) { setAccountErr('Supabase client not configured'); return }
+        if (!supabase) { setAccountErr('Client Error'); return }
         
-        console.log('Fetching account value...')
-        setStatusStep('Getting Session...')
+        setStatusStep('Auth...')
         const session = await supabase.auth.getSession()
         const token = session?.data?.session?.access_token || ''
-        if (!token) { setAccountErr('No session token'); return }
+        if (!token) { setAccountErr('No session'); return }
 
         // Subscribe to real-time updates from local executor
-        const balanceSub = accountBalanceService.subscribeToBalance(user.id, (val) => {
+        accountBalanceService.subscribeToBalance(user.id, (val) => {
              setAccountValue(val)
              setAccountErr('')
              setStatusStep('Live (Local)')
@@ -141,16 +126,12 @@ export default function Dashboard() {
              return
         }
 
-        // Fallback: Try direct fetch first as it's more transparent for debugging
+        // Fallback: Try direct fetch
         const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 30000) // 30s frontend timeout
+        const timeout = setTimeout(() => controller.abort(), 30000)
         
         try {
-          // Attempt client-side fetch first if user requested it (via query param or setting)
-          // For now, we try server-side first, but fall back to client-side logic if timeout occurs
-          // NOTE: Client-side fetch WILL fail CORS unless user has a proxy extension
-          
-          setStatusStep('Sending Request...')
+          setStatusStep('Fetching...')
           const res = await fetch(`${supabaseUrl}/functions/v1/account-value`, {
               method: 'POST',
               headers: {
@@ -162,17 +143,9 @@ export default function Dashboard() {
               signal: controller.signal
           })
           clearTimeout(timeout)
-          
-          setStatusStep('Parsing Response...')
-          const json = await res.json().catch((e) => {
-              console.error('JSON parse error:', e)
-              return { error: 'Invalid JSON response' }
-          })
-          console.log('Account fetch result:', res.status, json)
+          const json = await res.json().catch(() => ({ error: 'Invalid JSON' }))
 
-          if (!res.ok || json?.ok === false) {
-               throw new Error(String(json?.error || json?.data || res.statusText || 'Function error'))
-          }
+          if (!res.ok || json?.ok === false) throw new Error(String(json?.error || 'Error'))
           
           setAccountValue(Number(json?.totalEq || 0))
           setAccountErr('')
@@ -180,8 +153,7 @@ export default function Dashboard() {
         } catch (fetchErr: any) {
            clearTimeout(timeout)
            if (fetchErr.name === 'AbortError' || fetchErr.message.includes('timed out')) {
-             // Fallback: Try client-side fetch (requires IP whitelist but fails CORS without proxy)
-             setStatusStep('Server timed out. Trying client-side...')
+             setStatusStep('Fallback...')
              try {
                const { okxCredentialsService } = await import('../services/supabase')
                const bundle = await okxCredentialsService.loadEncrypted(user.id)
@@ -191,24 +163,18 @@ export default function Dashboard() {
                  if (clientData?.data?.[0]?.totalEq) {
                    setAccountValue(Number(clientData.data[0].totalEq))
                    setAccountErr('')
-                   setStatusStep('Done (Client-side)')
+                   setStatusStep('Client Fetch')
                    return
                  }
                }
-             } catch (clientErr) {
-               console.error('Client-side fetch failed:', clientErr)
-             }
-             
-             throw new Error('Request timed out. Server blocked by IP whitelist? Client blocked by CORS? Check console.')
+             } catch {}
+             throw new Error('Timeout')
            }
            throw fetchErr
         }
       } catch (e: any) {
-        console.error('Account fetch error:', e)
-        // Handle weird non-Error objects
-        const msg = e?.message || (typeof e === 'string' ? e : JSON.stringify(e))
-        setAccountErr(msg || 'Failed to fetch account value')
-        setStatusStep('Error')
+        setAccountErr(e?.message || 'Error')
+        setStatusStep('Failed')
       }
     }
     run()
@@ -216,91 +182,120 @@ export default function Dashboard() {
     return () => timer && clearInterval(timer)
   }, [user])
 
-  const toggleStrategyPanel = () => {
-    const next = !strategyCollapsed
-    setStrategyCollapsed(next)
-    try { localStorage.setItem('strategyPanelCollapsed', next ? '1' : '0') } catch {}
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-dark-300">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading terminal...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-dark-900 overflow-x-hidden">
-      <div className="trading-dashboard container max-w-screen-xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text_white mb-2">Live Trading Dashboard</h1>
-          <p className="text-dark-400">
-            Monitor real-time market data, strategy signals, and execute trades
-          </p>
-          <div className="mt-2 flex items-center gap-3">
-            <span className="text-sm text-white">Account Value: {accountValue !== null ? `$${accountValue.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDT` : (accountErr ? `Error: ${accountErr}` : `Loading... (${statusStep})`)}</span>
-            <div className="text-xs text-dark-400 bg-dark-800 px-2 py-1 rounded border border-dark-700">
-              <span className="text-primary-400 font-medium">Local Executor:</span> Run <code>python src/execution/local_executor.py</code> to execute trades from your device.
-            </div>
+    <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-blue-500/30">
+      {/* Top Navigation Bar */}
+      <header className="h-16 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md fixed top-0 w-full z-50 px-6 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <SignalIcon className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="text-lg font-bold tracking-tight text-slate-100">Finance<span className="text-blue-500">AI</span> Terminal</h1>
+          <div className="h-4 w-px bg-slate-700 mx-2"></div>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${accountValue !== null ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
+            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">{statusStep || 'Connecting...'}</span>
           </div>
         </div>
 
-        {/* Intraday Report Section */}
-        <IntradayReportBar />
-
-        {/* Strategy Signals Panel */}
-        <div className="trading-card mt-6">
-          <div className="p-4 border-b border-dark-700 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-white">Strategy Signals</h2>
-              <p className="text-sm text-dark-400">Live trading signals from active strategies</p>
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Net Account Value</p>
+            <div className="text-xl font-bold text-slate-100 mono-num leading-none">
+              {accountValue !== null 
+                ? `$${accountValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                : <span className="text-slate-600">---.--</span>
+              }
+              <span className="text-sm text-slate-500 ml-1">USDT</span>
             </div>
-            <button
-              onClick={toggleStrategyPanel}
-              className="px-3 py-1 text-xs font-medium rounded bg-dark-700 text-dark-200 hover:bg-dark-600"
-            >
-              {strategyCollapsed ? 'Expand' : 'Collapse'}
-            </button>
-            <button
-              onClick={() => setPromptOpen(p => !p)}
-              className="ml-2 px-3 py-1 text-xs font-medium rounded bg-primary-600 text-white hover:bg-primary-700"
-            >
-              {promptOpen ? 'Hide Prompt' : 'Edit Prompt'}
-            </button>
           </div>
-          {!strategyCollapsed && (
-            <StrategySignals 
-              signals={signals}
-              strategies={[]}
-              activeSymbols={activeSymbols}
-              onAssetsChange={async (next) => {
-                setActiveSymbols(next)
-                if (user) {
-                  for (const sym of ['BTC-USDT','ETH-USDT']) {
-                    await strategyAssetsService.setAsset(user.id, 'seed-strategy-1', sym, next.includes(sym))
+          <div className="h-8 w-px bg-slate-800"></div>
+          <div className="flex items-center gap-3">
+             <div className="text-xs text-slate-400 bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800 flex items-center gap-2">
+               <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+               Local Executor: {accountValue ? 'Active' : 'Waiting'}
+             </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Layout Grid */}
+      <main className="pt-20 pb-8 px-6 max-w-[1920px] mx-auto">
+        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-7rem)]">
+          
+          {/* Left Column: Market Context (Width 8) */}
+          <div className="col-span-12 lg:col-span-8 flex flex-col gap-6 h-full overflow-hidden">
+            {/* Row 1: Intraday Reports */}
+            <section className="shrink-0">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Market Brief</h2>
+                <span className="text-xs text-slate-600 bg-slate-900 px-2 py-1 rounded border border-slate-800">1H Interval</span>
+              </div>
+              <IntradayReportBar />
+            </section>
+
+            {/* Row 2: Strategy Signals (Fill remaining height) */}
+            <section className="flex-1 min-h-0 flex flex-col bg-slate-900/30 rounded-xl border border-slate-800/50 overflow-hidden">
+              <StrategySignals 
+                signals={signals}
+                strategies={[]}
+                activeSymbols={activeSymbols}
+                onAssetsChange={async (next) => {
+                  setActiveSymbols(next)
+                  if (user) {
+                    for (const sym of ['BTC-USDT','ETH-USDT']) {
+                      await strategyAssetsService.setAsset(user.id, 'seed-strategy-1', sym, next.includes(sym))
+                    }
                   }
-                }
-              }}
-              onSignalSelect={(signal) => console.log('Signal selected:', signal)}
-            />
-          )}
-          {promptOpen && (
-            <div className="p-4">
-              <PromptEditor strategyId="seed-strategy-1" />
+                }}
+                onSignalSelect={(signal) => console.log('Signal selected:', signal)}
+              />
+            </section>
+          </div>
+
+          {/* Right Column: Controls & Settings (Width 4) */}
+          <div className="col-span-12 lg:col-span-4 flex flex-col gap-6 h-full overflow-y-auto thin-scroll pr-1">
+            
+            {/* Prompt Editor Card */}
+            <div className="finance-card">
+              <div className="finance-card-header">
+                <span className="finance-card-title flex items-center gap-2">
+                  <CommandLineIcon className="w-4 h-4 text-purple-500" />
+                  Strategy Logic
+                </span>
+              </div>
+              <div className="p-4">
+                <PromptEditor strategyId="seed-strategy-1" />
+              </div>
             </div>
-          )}
+
+            {/* Settings Card */}
+            <div className="finance-card">
+              <div className="finance-card-header">
+                <span className="finance-card-title flex items-center gap-2">
+                  <Cog6ToothIcon className="w-4 h-4 text-slate-500" />
+                  System Config
+                </span>
+              </div>
+              <div className="p-1">
+                <SettingsPanel />
+              </div>
+            </div>
+
+          </div>
         </div>
-
-        {/* Secure Settings Panel */}
-        <SettingsPanel />
-
-        {/* Prompt Editor moved into Strategy Signals panel */}
-      </div>
+      </main>
     </div>
   )
 }
