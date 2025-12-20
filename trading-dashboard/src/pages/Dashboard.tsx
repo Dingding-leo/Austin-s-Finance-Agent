@@ -18,6 +18,13 @@ export default function Dashboard() {
   const [accountErr, setAccountErr] = useState<string>('')
   const [statusStep, setStatusStep] = useState<string>('')
 
+  // Log account errors if they occur
+  useEffect(() => {
+    if (accountErr) {
+      console.error('Account Sync Error:', accountErr)
+    }
+  }, [accountErr])
+
   // Client-side fetcher for fallback
   const clientSideFetch = async (creds: any) => {
     const host = 'https://www.okx.com'

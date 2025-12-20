@@ -82,6 +82,8 @@ export default function IntradayReportBar() {
               </div>
               <div className="text-xs text-slate-500 font-medium">
                 {r?.confidence ? Math.round(r.confidence) + '% Conf.' : 'N/A'}
+                {/* Accuracy Indicator */}
+                {accuracy > 0 && <span className="block text-[10px] text-slate-600 mt-0.5">Acc: {Math.round(accuracy)}%</span>}
               </div>
             </div>
           </div>
